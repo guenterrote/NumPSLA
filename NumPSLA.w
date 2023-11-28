@@ -84,79 +84,16 @@ Using inverse-PSLA makes
 Only good if combined with screening one level before!
 Computing inverse-PSLA one level before max-n costs almost nothing.
 
-@*3
- Idea for counting PSLAs.
-Experiments with a divide-and-conquer approach for counting PSLAs:
-Enumerate all possibilities of arrangements in the triangular wedge
-between lines 1 and 6 on the left of the crossing.
- There are
-$0.522 \times 10^9$
- different such arrangements, %  522636410
-and they are grouped into 
-3{,}187{,}633
-patterns of crossings along the boundary edges formed by 1 and 6.
-Which would have to be stored.
-This must be contrasted with
-$18 \times 10^9$ arrangements altogether with 10 lines.
-Maybe it can be further reduces under symmetries of relabeling the boundary patterns.
-(The most frequent boundary patterns occur 1,232,944 times.)
-
-@*3
-Other idea for counting PSLAs.
-
-\begin{enumerate}
-\item 
-1) sweep by a line from bottom to
-top. a la Alvarez and Seidel for counting triangulations of point
-sets.
-%
-The details of the sweep must be figured out. E.g. sweep by an
-$x$-montone curve $C$ that crosses every line at most once. curve
-traverses a chain of faces. We encode the UPPER boundary $B$ of this chain of
-faces by a sequence of line numbers.  Convention: We always advance $C$ over the
-LEFTMOST potential crossing. (Perhaps we must mark the last place of change.)
-
-Size of $B$? (some generalized zone theorem?)
-
-Needs MEMORY SPACE. (How much? Do we need hashing/dictionary or can we
-figure out a good coding?)
-
-
- Is it possible that for the same pattern, the crossed edges appear
-  in different order along the boundary,
-   in DIFFERENT arrangements?
-
-\item 
-
-  Idea 2) Threading a new line through an arrangement $A$ of $n-1$
-  pseudolines.  The number of possibilities can be simply computed on
-  $O(n^2)$ time as the number of paths in the dual, which is a DAG
-  through the faces, without generating them explicitly.
-
-  Extension. Thread $k$ new lines simultaneously through each
-  arrangement $A$ of $n'=n-k$ pseudolines.
-  Sweep over a sequence $B_0,B_1,\ldots,B_{\binom {n'}2}$ of
-  boundaries.
-  Each new line (of the $k$) is assigned to some group of consecutive edges on
-  the boundary $B$
-  that share a common lower face.
-  If there are $b$ such groups, need to code $\binom {b+k-1}k k! =
-  (b+k-1)!/(b-1)! = b(b+1)\cdots(b+k-1)$ possibilities.
-
-  Crossings among the $k$ lines happen inside the faces of $A$.
-
-  The possible crossing patterns between the upper and lower boundary
-  of a face $F$ is precomputed and stored in a table. (``partial
-  pseudoline arrangements'', where lines cross \emph{at most} once).
-  
-\item Combination of ideas 1 and 2. Even more SPACE needed.
-\end{enumerate}
-
 
 @*Introduction. The purpose of this program is to enumerate
 ORIENTED
-abstract order types.  It does it via pseudoline arrangements, and it
-uses the Reverse Search method of Avis and
+abstract order types.
+(sometimes also called
+generalized configuration or a pseudoconfiguration)
+
+
+It does it via pseudoline arrangements, and it
+NONONO!!!!!!!!!!!!!!! uses the Reverse Search method of Avis and
 Fukuda. The method allows to enumerate combinatorial objects without
 repetition and without much storage.
 
@@ -205,6 +142,8 @@ A \emph{marked} OAOT is an OAOT with a marked point on the convex hull.
     which apply specialization or geometric reinterpretation in different order.}
   \label{fig:PSLA}
 \end{figure}
+
+See Aichholzer and Krasser, Table 1.
 
 \halign{\strut\hfil$#$ &\ \hfil$#$ &\ \hfil$#$ &\ \hfil$#$ &\quad$#$\hfil
   &\ \hfil$#$&\ \ \hfil$#$\cr
@@ -256,7 +195,7 @@ primitive sorting networks on $n$ elements: A006245, A006246, A006248.
 
 @d MAXN 15 /* The maximum number of pseudolines for which the program will work. */
 @d debug 0
-@d profile 1
+@d profile 1 // gather statistics and profiling information
 @d enumAOT 1 /* purpose is enumeration of AOTs */
 /* Other purposes might be enumeration of PSLAs */
 @d readdatabase 0 // version for reading point sets of the order-type database
@@ -267,12 +206,8 @@ exclude-files of nonrealizable AOTs, requires |enumAOT==1|. */
 
 @p
 
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
 
+@<Include standard libaries@>@;
 @<Types and data structures@>@;
 @<Global variables@>@;
 @<Subroutines@>@;
@@ -282,9 +217,9 @@ int main (int argc,char* argv[])
   @qLocal variables@>
   @<Parse the command line@>;
 #if readdatabase /*  reading from the database
-   (OMITTED)
 */
- @q<Read all point sets...@>@;
+@q   (OMITTED) @>
+ @<Read all point sets...@>@;
 #endif
 #if enumAOT
   @<Initialize statistics and open reporting file@>;
@@ -302,6 +237,14 @@ int main (int argc,char* argv[])
 typedef enum {@+@!false,@+@!true @+ } boolean;
 @#
 
+@ Standard libraries
+@<Include standard libaries@>=
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+
 
 @*1 Auxiliary macros for \textbf{for}-loops.
 @q for_t_from_to(type,x,first,last)  for(type x=first; x<= last; x++)@>
@@ -318,9 +261,7 @@ typedef enum {@+@!false,@+@!true @+ } boolean;
     printf("%d",a[j]);
     }
     printf(end);
-    } /* for gcc, compile with \texttt{-Wno-format-zero-length} to suppress warnings */
-
-@* Pseudoline arrangements.
+    } /* for \texttt{gcc}, compile with \texttt{-Wno-format-zero-length} to suppress warnings */
 
 
 @*1 Representations of Pseudoline arrangements.
@@ -355,28 +296,32 @@ by the program |print_wiring_diagram|:
 \medskip
 
 % \end{verbatim}
-Pseudoline 1 starts topmost and ends bottommost. In the end, the
+Pseudoline 1 starts topmost and ends bottommost. On the right end, the
 order of all pseudolines is reversed.
 There is an imaginary pseudoline $0$ of very negative slope that
 intersects all other pseudolines from top to bottom at the very left
 and again intersects all pseudolines from bottom to top at the very
 right.
 
-@3 Representation as an array.
+@*3 The local sequences matrix and its inverse.
 Here is a representation as a two-dimensional array, indicating for
 each pseudoline $i$ the sequence $P_i$ of crossings with the other
 lines.
+
+local sequences matrix
+
 {
 \def\minus{{\setbox0=\hbox{0}\hbox to \wd0{\hss-\hss}}}
 \catcode`-=\active\let-=\minus
 \begin{tabbing}
   \qquad\=\+
-$P_0=[1,2,3,4,5]$\qquad\qquad\=$\bar P_0=[-,0,1,2,3,4]$ 
- \\$P_1=[0,4,5,3,2]$\> $\bar P_1=[0,-,4,3,1,2]$  \\$P_2=[0,3,4,5,1]$\> $\bar
-P_2=[0,4,-,1,2,3]$ 
-\\$P_3=[0,2,4,5,1]$ \> $\bar P_3=[0,4,1,-,2,3]$  \\
-$P_4=[0,2,3,1,5]$\> $\bar P_4=[0,3,1,2,-,4]$  \\
-$P_5=[0,2,3,1,4]$\> $\bar P_5=[0,3,1,2,4,-]$ 
+  $P_0=[1,2,3,4,5]$\qquad\qquad\=$\bar P_0=[-,0,1,2,3,4]$
+  \qquad\qquad\=%$B_0=[0,0,0,0,0]$ 
+  \\$P_1=[0,4,5,3,2]$\> $\bar P_1=[0,-,4,3,1,2]$ \>$B_1=[0,0,0,0,0]$ 
+  \\$P_2=[0,3,4,5,1]$\> $\bar P_2=[0,4,-,1,2,3]$ \>$B_2=[0,0,0,0,1]$  
+  \\$P_3=[0,2,4,5,1]$ \> $\bar P_3=[0,4,1,-,2,3]$ \>$B_3=[0,1,0,0,1]$ 
+  \\$P_4=[0,2,3,1,5]$\> $\bar P_4=[0,3,1,2,-,4]$ \>$B_4=[0,1,1,1,0]$ 
+  \\$P_5=[0,2,3,1,4]$\> $\bar P_5=[0,3,1,2,4,-]$ \>$B_5=[0,1,1,1,1]$  
 \end{tabbing}
 }
 The first row and the first column are determined.
@@ -399,7 +344,7 @@ For modifying and extending PSLAs, it is best to work with a linked
 representation.
 
 Point $(j,k)$ describes the crossing with line $k$ along the line $j$.
-|SUCC| and |PRED| point to the next and previous crossing on line $j$.
+|SUCC(j,k)| and |PRED(j,k)| point to the next and previous crossing on line $j$.
 For $(k,j)$ we get the corresponding information for the line $k$.
 In the example, we have |SUCC(2,3)|${}=5$
 and accordingly |PRED(2,5)@t${}=3$@>|.
@@ -409,6 +354,7 @@ The infinite rays on line $j$ are represented by the additional line 0:
 and
 |PRED(j,0)| is the last crossing.
 The intersections on line 0 are cyclically ordered $1,\dts,n$.
+Thus, |SUCC(0,i)=i+1| and |SUCC(0,n)@t${}=1$@>|.
 
 The program works with a single linked-list representation, which is
 stored in the global arrays 
@@ -435,27 +381,189 @@ int succ[MAXN+1][MAXN+1];
 int pred[MAXN+1][MAXN+1];
 
 
+@* Recursive Enumeration.
+
+We extend an $x$-monotone pseudoline arrangement
+ of $n-1$ lines $1,\dts, n-1$, 
+ by threading an additional line $n$ through it
+from the bottom face to the top face. The new line gets the largest
+slope of all lines.
+
+Line 0 crosses the other lines
+in the order $1,2,\dts,n$.
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics{cross-one-face}
+  \caption{Threading line $n$ through a face}
+  \label{fig:threading}
+\end{figure}
+
+@
+@<Core subroutine for recursive generation@>=
+
+void recursive_generate_PSLA_start(int n);
+
+void recursive_generate_PSLA(int entering_edge, int k_right, int n)
+{ /*
+The new line enters a face $F$ from the bottom.
+The edge through which it crosses is part of line |entering_edge|, and
+its endpoint is the crossing with |k_right|.
+*/
+
+
+  int j = entering_edge;
+  int jplus = k_right;
+@q  printf("enter through %d right %d n %d\n",j,jplus,n);@>
+  while(jplus>j)
+    { // find right vertex of the cell $F$
+      int jplusold = jplus;
+      jplus = SUCC(jplus,j);
+      j = jplusold;
+@q      printf("succ j %d j+ %d n %d\n",j,jplus,n);@>
+    }
+  if (jplus==0) { // $F$ is unbounded
+    if (j==n-1 )
+      { // $F$ is the top face.
+	LINK(n,@,@,entering_edge,0);    /* complete the insertion of line $n$ */
+	@<Process the PSLA@>@;
+@<Indicate Progress@>;
+  
+	    @q<Process the PSLA@>@;
+	if (n<n_max)
+          if (n!=split_level || countPSLA[n]%parts == part) {
+#if enumAOT // screening one level below
+        boolean hopeful = true;
+        if(n==n_max-1) {
+          @<Screen one level below level |n_max|@>@;
+}
+	if(hopeful)
+#endif
+{     localCountPSLA[n+1]=1; // reset child counter
+	    recursive_generate_PSLA_start( n+1);
+            /* thread the next pseudoline */
+@q            if (localCountPSLA[n+1]>max_children[n])@>
+@q            max_children[n]= localCountPSLA[n+1];@>
+}            
+}
+	return;
+      }
+      else
+      { /* jump to the upper bounding ray of $F$ */
+        jplus=j+1; j = 0;
+        }
+  }
+  /* Now the crossing |      j|$\times$|jplus| is the rightmost vertex
+  of the face $F$. The edge
+ |jplus| is on the upper side. If $F$ is bounded,
+  $j$ is on the lower side; otherwise, $j=0$.
+  */
+  do
+    { // scan the upper edges of $F$ from right to left and try them out.
+      k_right = j;
+      j = jplus;
+      int k_left = jplus = PRED(j,k_right);
+@q      printf("MID on line j %d between %d and %d (n=%d)\n",j,k_left,k_right,n);@>
+
+LINK(j,@,@,k_left,n); // insert the crossing
+      LINK(j,@,@,n,k_right);
+
+      LINK(n,@,@,entering_edge,j);
+@#
+      recursive_generate_PSLA(j, k_right, n);
+      /* enter the recursion */
+@#
+LINK(j,@,@,k_left,k_right); // undo the changes
+@q printf("UNDO n=%d ",n); PSLA Ps;  convert_to_PS_array(&Ps,n);  print_pseudolines_short(&Ps,n);@>
+    }
+  while (jplus > j); /* terminate at left endpoint of the face $F$ or
+  at unbounded ray (|jplus|=0) */
+  return;
+}
+
+  void recursive_generate_PSLA_start(int n)
+  { LINK(0,@,@,n-1,n); /* insert line $n$ on line 0 */
+    LINK(0,@,@,n,1);
+      recursive_generate_PSLA(0, 0, n);
+      /* enter the recursion. */
+      /* There us a little trick: With these parameters $0,0$,
+      the procedure
+|recursive_generate_PSLA| will skip the first loop and
+will then correctly scan the edges of the bottom face $F$ from right to left.
+ */
+  LINK(0,@,@,n-1,1); // undo the insertion of line $n$
+}
+    
+@ Start with 2 pseudolines.
+
+  @<Start the generation@>=
+
+  LINK(1,@,@,0,2);
+  LINK(1,@,@,2,0);
+  LINK(2,@,@,0,1);
+  LINK(2,@,@,1,0);
+@qSUCC(0,0)=1; // artificial, makes it easier for |convert_to_PS_array|@>
+LINK(0,@,@,1,2); /* |LINK(0,@,@,2,3)| and |LINK(0,@,@,3,1)| will be established
+shortly in the first recursive call. */
+
+  recursive_generate_PSLA_start(3); 
+
+
+
+@
+@<Indicate Progress@>=
+if (n==n_max && countPSLA[n] % 50000000000==0) { // $5\times 10^{10}$
+
+printf("..%Ld.. ", countPSLA[n]);
+  PSLA P;
+  convert_to_PS_array(&P,n);
+  print_pseudolines_short(&P,n);
+@q  print_small(S, n_points);@>
+  fflush(stdout);
+}
+
+@
+@<Process the PSLA@>=
+    countPSLA[n]++; // update accession number counter
+    localCountPSLA[n]++; // update local counter
+@qif(n==n_max)  printf("%d\n",PRED(1,0));@>
+
+#if 0
+if(n==n_max && countPSLA[n]==50) { // print ``some'' example
+  PSLA P1,invP1;
+  convert_to_PS_array(&P1,n);
+  convert_to_inverse_PS_array(&invP1,n);
+  print_pseudolines_short(&P1,n);
+  printf("inverse ");  print_pseudolines_short(&invP1,n+1);
+  print_wiring_diagram(n);
+  }
+#endif
+
+@<Gather statistics about the AOT, collect output@>@;
+@<Further processing of the AOT@>@;
+
+@* Conversion between different representations.
 @
 Convert from linked list to array.
 
-Input: PSLA with $n$ lines $1\dts n$, stored in |succ| and |pred|.
-Output: PSLA-Array |Ps| of size $(n+1)\times(n-1)$ for pseudoline arrangement on $n$ pseudolines.
+Input: PSLA with $n$ lines $1\dts n$, stored in |succ|. % and |pred|.
+Output: PSLA-Array |P| of size $(n+1)\times(n-1)$ for pseudoline arrangement on $n$ pseudolines.
 @<Subr...@>=
 
-void convert_to_PS_array(PSLA *Ps, int n)
+void convert_to_PS_array(PSLA *P, int n)
 {
   int j = 1;
   for_int_from_to(i,0,n)
   { 
     for_int_from_to(p,0,n-1 )
     {
-      (*Ps)[i][p]=j;
+      (*P)[i][p]=j;
       j = SUCC(i,j);
     }
     j = 0; // j starts at 0 except for the very first line.
   }
 }
-@ The inverse PSLA matrix $\bar P=I$ gives the following information:
+@ The inverse PSLA matrix $\bar P=I=$|invP| gives the following information:
 $I_{jk}=p$ if
 the intersection between line $j$ and line $k$ is
 the $p$-th intersection on line $j$ ($p=0,\dts,n-1$).
@@ -464,51 +572,29 @@ arrangement, and about the dual point set,
 see Section~\ref{sec:orientation}.
 
 \iffalse
-void compute_inverse_PSLA(PSLA *Ps,PSLA *invPs,int n)
+void compute_inverse_PSLA(PSLA *P,PSLA *invP,int n)
 {
   for_int_from_to(i, 0, n) 
     for_int_from_to(p, 0, n-1) 
-    (*invPs)[i][(*Ps)[i][p]] = p;
+    (*invP)[i][(*P)[i][p]] = p;
 }
 \fi
 @<Subr...@>=
 
-void convert_to_inverse_PS_array(PSLA *invPs, int n)
+void convert_to_inverse_PS_array(PSLA *invP, int n)
 {
   int j = 1;
   for_int_from_to(i,0,n)
   { 
     for_int_from_to(p,0,n-1 )
     {
-      (*invPs)[i][j]=p;
+      (*invP)[i][j]=p;
       j = SUCC(i,j);
     }
     j = 0; // j starts at 0 except for the very first line.
   }
 }
 
-
-void print_pseudolines_short(PSLA *Ps,int n)
-{
-  printf("P");
-  for_int_from_to(i, 0,n)
-  {
-    printf("!");
-    for_int_from_to(j, 0,n-1)
-       printf("%c",TO_CHAR((*Ps)[i][j]));
-  }
-  printf("\n");
-}
-
-void print_pseudolines_compact(PSLA *Ps,int n)
-{ // line 0 is always 1234$\dts$
-  for_int_from_to(i, 1,n)
-  { // line $P_i$ starts with 0 and is a permutation that misses $i$.
-    if (i>1) printf("!");
-    for_int_from_to(j, 1,n-2)
-       printf("%c",TO_CHAR((*Ps)[i][j]));
-  }
-}
 
 @*1 The Orientation Predicate.
 \label{sec:orientation}
@@ -559,7 +645,7 @@ k<i && i<j ? I[i][j]<I[i][k] :
 This is easy; we just scan the top face.  We
 know that 0, 1, and $n$ belong to the convex hull.  0 represents the line at $\infty$).
 
-The input is taken from |succ| and |pred|.
+The input is taken from the global variable |succ|. (|pred| is not used.)
 
 \iffalse
 small_int getHulledges_PSLA(int n,
@@ -604,8 +690,232 @@ small_int upper_hull_PSLA(int n,
 
 }
 
+@*1 Unique identifiers, accession numbers, Dewey decimal notation.
 
-@*2 Lexmin for PSLA Representation.
+The recursive enumeration algorithm imposes an  implicit tree structure on PSLAs: the
+parents of a PSLA with $n$ lines is the unique PSLA on $n-1$ lines from
+which it is generated.  We number the children of each node in the
+order in which they are generated, starting from 1.
+The sequence of labels on the path
+from the root to a node gives a unique identifier to each node in the
+tree. (This is, however, specific to details of the enumeration
+algorithm: in which order edges are considered for crossing in the
+insertion, the choice of lexicographic criterion.)
+
+
+The purpose of this scheme is that it allows to identify a PSLA even if
+we parallelize the computation, and one thread of the program only
+visits certain branches of the tree.
+
+ @<Global variables@>+=
+long long unsigned localCountPSLA[MAXN+3];
+
+
+@ @<Subr...@>=
+
+void print_id(int n)
+{
+  printf("%Ld",localCountPSLA[3]);
+  for_int_from_to(i,4,n)
+     printf(".%Ld",localCountPSLA[i]);
+}
+
+@*Output.
+
+@ Prettyprinting of a wiring diagram. Fill a buffer of lines
+columnwise from left to right.
+
+@d TO_CHAR(i) ((char) (
+		       (i<10? (int)'0' : ((int)'A' - 10))
+		       + i))
+
+@<Subr...@>=
+
+
+void print_wiring_diagram(int n)
+{ // ASCII, horizontal, column-wise
+  int next_crossing[MAXN+1]; // current crossing on each line
+  int line_at[MAXN+1]; // which line is on the $i$-th track
+  boolean crossing[MAXN]; /* is there a crossing between track $i$ and
+  $i+1$ */
+
+  char buffer[2*MAXN][MAXN*MAXN];
+  
+  for_int_from_to(j,0,n-1) {
+    next_crossing[j+1]=SUCC(j+1,0);
+    /* crossing $\#0$ with line 0 ``at $\infty$'' is not considered. */
+    line_at[j]=j+1;
+  }
+  crossing[n-1] = false;
+  int n_crossings = 0;
+  int column = 0;
+  
+  for_int_from_to(p,0,2*n-1) buffer[p][column]=' ';
+   @+   column++;//empty column
+  while(true)
+    {
+    // find where crossings occur, set array |crossing|$[0\dts n-2]$
+    boolean something_done = false;
+    for_int_from_to(p, 0,n-2)
+      {
+	int i = line_at[p];
+	int j = line_at[p+1];
+	crossing[p] =next_crossing[i]==j && next_crossing[j]==i;
+	if (crossing[p])
+	  {
+	    something_done = true;
+	    n_crossings++;
+	  }
+        }
+    for_int_from_to(p,0,n-1) {
+    buffer[2*p][column]=TO_CHAR(line_at[p]);
+    buffer[2*p+1][column]=' ';
+    }
+        
+    column++;
+    if (!something_done) break;
+    for_int_from_to(p,0,n-1){
+      buffer[2*p][column]='-';
+      buffer[2*p+1][column]=' ';
+    }
+    for_int_from_to(p,0,n-2)
+      {
+	if (crossing[p])
+	  {       // print the crossing as an |'X'|
+	    buffer[2*p][column]=
+	    buffer[2*p+2][column]=' '; // erase the adjacent lines
+	    buffer[2*p+1][column]='X';
+	  }
+      }
+    column++;
+    for_int_from_to(p, 0,n-2)
+      {       // carry out the crossings
+	if(crossing[p])
+	  {
+	    int i = line_at[p];
+	    int j = line_at[p+1];
+	    next_crossing[i] = SUCC(i,next_crossing[i]);
+	    next_crossing[j] = SUCC(j,next_crossing[j]);
+	    line_at[p] = j;
+	    line_at[p+1] = i;
+	  }
+      }
+    }
+  for_int_from_to(p,0,2*n-2) {
+    buffer[p][column]=0; // finish the lines
+    printf("%s\n",buffer[p]); // and print them
+  }
+  assert(n_crossings*2 == n*(n-1));
+}
+
+@*2 Fingerprints.
+
+@<Subr...@>=
+
+void print_pseudolines_short(PSLA *P,int n)
+{
+  printf("P");
+  for_int_from_to(i, 0,n)
+  {
+    printf("!");
+    for_int_from_to(j, 0,n-1)
+       printf("%c",TO_CHAR((*P)[i][j]));
+  }
+  printf("\n");
+}
+
+void print_pseudolines_compact(PSLA *P,int n)
+{ // line 0 is always 1234$\dts$
+  for_int_from_to(i, 1,n)
+  { // line $P_i$ starts with 0 and is a permutation that misses $i$.
+    if (i>1) printf("!");
+    for_int_from_to(j, 1,n-2)
+       printf("%c",TO_CHAR((*P)[i][j]));
+  }
+}
+
+@*3 A more compact fingerprint.
+
+Sufficient to know
+
+
+$B_i[j]=1$ if $P_i[j]<i$,
+see Felsner,
+Chapter 6.
+
+binary arrays $B_1,\ldots,B_n$.
+The first column is fixed.
+The first row $B_1$ and the last row $B_n$ is fixed, and they need not
+be coded.
+Also, since row $B_i$ contains $i-1$ ones, we can omit the last entry
+per row, since it can be reconstructed from the remaining entries.
+Thus we encode the $(n-2)\times(n-2)$ array obtained
+removing the bordere from the original $n\times n$ array.
+
+We code 6 bits into an ASCII symbol, using the small and capital
+letters, the digits, and the symbols \texttt{+} and \texttt{-}.
+
+Since we use this encoding for the case when $n$ is known,
+we need not worry about terminating the code.
+%(Otherwise, we could terminate it with two 0-bits, because t
+
+(Replace matrices would offer even more savings.)
+
+@d FINGERPRINT_LENGTH 30
+//enough for $13\times13$ bits plus terminating null
+
+@<Global...@>+=
+char fingerprint[FINGERPRINT_LENGTH];
+
+@
+@<Subr...@>=
+
+char encode_bits(int acc)
+{
+      if (acc<26)
+    return  (char) (acc + (int) 'A');
+    else  if (acc<52)
+    return  (char) (acc - 26 + (int) 'a');
+    else  if (acc<62)
+    return  (char) (acc - 52 + (int) '0');
+    else  if (acc==62)
+    return  '+';
+    else
+    return  '-';
+}
+
+void compute_fingerprint(PSLA *P,int n) {
+
+int charpos = 0;
+int bit_num = 0;
+int acc = 0;
+for_int_from_to(i,1,n-1)
+for_int_from_to(j,1,n-1)
+{acc <<= 1;
+  if ((*P)[i][j]<i) acc |= 1;
+  bit_num += 1;
+  if (bit_num == 6) {
+    fingerprint[charpos++] =  encode_bits(acc);
+    assert(charpos < FINGERPRINT_LENGTH-1);
+    bit_num = acc = 0;
+  }
+  }
+  if (bit_num) 
+    fingerprint[charpos++] =  encode_bits(acc<<(6-bit_num));
+    assert(charpos < FINGERPRINT_LENGTH-1);
+    fingerprint[charpos++] =  '\0';
+  }
+
+  
+@qLocal...@>
+
+@q  printf("Info: small matrix %u bytes.\n", (int) sizeof (small_matrix));@>
+
+
+
+@*Abstract order types.
+
+@*1 Lexmin for PSLA Representation.
 
 In order to generate every AOT only once, we check whether the
 representation is smallest among all PSLAs that produce
@@ -617,7 +927,7 @@ The average number of extreme vertices is slightly less than 4.
 It does not pay off to shorten the loop considerably.
 (The average \emph{squared} face size matters!)
 
-In determining whether a PSLA is the lex-smallest among all PSLAs
+To determine !!!!  whether a PSLA is the lex-smallest among all PSLAs
 representing an AOT, we scan the PSLA
 matrix row-wise \emph{from right to left}. In comparison with the
 more natural left-to-right order, this gives, experimentally, a
@@ -630,7 +940,7 @@ left-to-right order.
 int Sequence[MAXN+1][MAXN+1]; /*
 |Sequence[r][p]| gives the $p$-th crossing on the $r$-th hull edge. */
 int new_label[MAXN+1][MAXN+1]; /*
-When the $r$-th hull edge is use in the role of line 0,
+When the $r$-th hull edge is used in the role of line 0,
 |new_label[r][j]| gives index that is use for the (original) line
 $j$. */
 int candidate[2*(MAXN+1)]; // list of candidates, gives index |r| into |hulledges|
@@ -668,6 +978,8 @@ small_int *hulledges, small_int hullsize)
 }
 
 @*2 Compute the lex-smallest representation.
+
+The input is taken from the global |succ| and |pred| arrays.
 
 @<Subr...@>=
 void compute_lex_smallest_PSLA(PSLA *P, small_int n,
@@ -731,27 +1043,29 @@ small_int *hulledges, small_int hullsize)
      }
    }
  }
-@
+@ The list of candidates is scanned and simultaneously overwritten
+with new values.
+
 @<Process candidate |c|, keep in list and advance |new_candidates|
          if equal...@>=
          int r = candidate[c];
-         int i=Sequence[r][pos];
+         int i=Sequence[r][pos]; // We are proceeding on line i
          int j=current_crossing[c];
          j = reversed ? SUCC(i,j): PRED(i,j);
          int a = new_label[r][j];
          if(reversed && a!=0)
            a=n+1-a;
-         if(a<current_min)
+         if(a<current_min) // new record:
          {
            new_candidates = new_candidates_forward = 0;
            current_min = a;
          }
          if (a==current_min)
-         {
+         { // candidate survives.
            candidate[new_candidates]=r;
            current_crossing[new_candidates] = j;
            new_candidates++;
-         }
+         } // Otherwise the candidate is skipped.
 
 
 
@@ -775,7 +1089,7 @@ If information about mirror symmetry is not necessary, then the mirror
 candidates
 can be omitted.
 
-@*2 Streamlined version. Fast screening of candidates
+@*1 Streamlined version. Fast screening of candidates
 
 Let $i$ and $j$ be two consecutive edges on the upper envelope.
 The quantity $Q(i,j)$ is defined as follows, see Figure~\ref{fig:def-Q}a.
@@ -841,7 +1155,7 @@ consecutive edges on the upper envelope. This has to be compared against.
 $Q(0,1)$.
 
 
-@ Screening candidates by comparing the leading entry $P_{1n}$,
+@ Screen candidates by comparing the leading entry $P_{1n}$,
  
 Compute the leading entry $P_{1n}$ for all candidates directly,
 without first computing the |label_arrays|.  The |label_arrays| are
@@ -851,7 +1165,7 @@ AOTs.  If $P_{1n}=2$ for line 0, the screening has no effect, but
 otherwise there is a high chance for finding a smaller value $P_{1n}$
 for some of the other candidates.
 
-[ Observation. The relative frequence of $P_{1n}$ over all OxPSLAs is
+[ Observation. The relative frequence of $P_{1n}$ over all PSLAs is
 about 26\,\% for 2 and $n$, about 11\,\% for 3 and $n-1$ and decreases
 towards the middle values. The symmetry can be explained as follows.
 An xPSLA is essentially a projective oriented PSLA with a marked angle. Going to
@@ -865,12 +1179,12 @@ computation.
 
  For example
  there are
- 18,410,581,880 OxPSLAs 
+ 18,410,581,880 PSLAs 
  with $n=10$ lines.
  Of these, only
  5,910,452,118 pass the screening test.
  Eventually, only
- 2,343,203,071 OxPSLA are really lex-min, and this is the number of
+ 2,343,203,071 PSLA are really lex-min, and this is the number of
  AOTs that we really want.
 
 
@@ -989,20 +1303,20 @@ $\bar Q(1,0)$ can still increase by at most 1. Thus
  $\bar Q(1,0)$ will beat $Q(1,0)$.
 
  For example, with $n=9$ lines
- there are  112,018,190 OxPSLAs, and they generate as children
- 18,410,581,880 OxPSLAs 
+ there are  112,018,190 PSLAs, and they generate as children
+ 18,410,581,880 PSLAs 
  with $n=10$ lines, as mentioned above. 
  The screening test at level $n=9$ eliminates
- 22,023,041 out of the 112,018,190 OxPSLAs (19.66\%) because they are
+ 22,023,041 out of the 112,018,190 PSLAs (19.66\%) because they are
  not able to produce a lex-min AOT in the next generation.
- The remaining  89,995,149 OxPSLAs produce 
- 15,409,623,219 offspring OxPSLAs
+ The remaining  89,995,149 PSLAs produce 
+ 15,409,623,219 offspring PSLAs
  with $n=10$ lines.
  as opposed to 18,410,581,880 without this pruning procedure.
- These remaining OxPSLAs are subject to the screening as before.
+ These remaining PSLAs are subject to the screening as before.
 
  @
-@<Screening one level below...@>=
+@<Screen one level below...@>=
 int P_1_n = PRED(1,0);
 /* insertion of last line $n$ can only make this larger. */
 if(P_1_n>3)
@@ -1161,198 +1475,6 @@ The last entry $q=n-1$ can be omitted, because every row is a permutation. */
   }
 
 
-@*1 Recursive Enumeration.
-
-We extend an $x$-monotone pseudoline arrangement
- of $n-1$ lines $1,\dts, n-1$, 
- by threading an additional line $n$ through it
-from the bottom face to the top face. The new line gets the largest
-slope of all lines.
-
-Line 0 crosses the other lines
-in the order $1,2,\dts,n$.
-
-\begin{figure}[htb]
-  \centering
-  \includegraphics{cross-one-face}
-  \caption{Threading line $n$ through a face}
-  \label{fig:threading}
-\end{figure}
-
-@
-@<Core subroutine for recursive generation@>=
-
-void recursive_generate_PSLA_start(int n);
-
-void recursive_generate_PSLA(int entering_edge, int k_right, int n)
-{ /*
-The new line enters a face $F$ from the bottom.
-The edge through which it crosses is part of line |entering_edge|, and
-its endpoint is the crossing with |k_right|.
-*/
-
-
-  int j = entering_edge;
-  int jplus = k_right;
-@q  printf("enter through %d right %d n %d\n",j,jplus,n);@>
-  while(jplus>j)
-    { // find right vertex of the cell
-      int jplusold = jplus;
-      jplus = SUCC(jplus,j);
-      j = jplusold;
-@q      printf("succ j %d j+ %d n %d\n",j,jplus,n);@>
-    }
-  if (jplus==0) { // $F$ is unbounded
-    if (j==n-1 )
-      { // $F$ is the top face.
-	LINK(n,@,@,entering_edge,0);    /* complete insertion of line $n$ */
-	@<Process the PSLA@>@;
-@<Indicate Progress@>;
-  
-	    @q<Process the PSLA@>@;
-	if (n<n_max)
-          if (n!=split_level || countPSLA[n]%parts == part) {
-#if 1 // screening one level below
-        boolean hopeful = true;
-        if(n==n_max-1) {
-          @<Screening one level below level |n_max|@>@;
-}
-	if(hopeful)
-#endif
-
-	    recursive_generate_PSLA_start( n+1);
-	     /* thread the next pseudoline */
-}
-	return;
-      }
-      else
-      { /* jump to the upper bounding ray of $F$ */
-        jplus=j+1; j = 0;
-        }
-  }
-  /* Now the crossing |      j|$\times$|jplus| is the rightmost vertex
-  of the face $F$. The edge
- |jplus| is on the upper side. If $F$ is bounded,
-  $j$ is on the lower side; otherwise, $j=0$.
-  */
-  do
-    { // scan the upper edges of $F$ from right to left and try them out.
-      k_right = j;
-      j = jplus;
-      int k_left = jplus = PRED(j,k_right);
-@q      printf("MID on line j %d between %d and %d (n=%d)\n",j,k_left,k_right,n);@>
-
-LINK(j,@,@,k_left,n); // insert the crossing
-      LINK(j,@,@,n,k_right);
-
-      LINK(n,@,@,entering_edge,j);
-@#
-      recursive_generate_PSLA(j, k_right, n);
-/* enter the recursion */
-@#
-LINK(j,@,@,k_left,k_right); // undo the changes
-@q printf("UNDO n=%d ",n); PSLA Ps;  convert_to_PS_array(&Ps,n);  print_pseudolines_short(&Ps,n);@>
-    }
-  while (jplus > j); /* terminate at left endpoint of the face $F$ or
-  at unbounded ray (|jplus|=0) */
-  return;
-}
-
-  void recursive_generate_PSLA_start(int n)
-  { LINK(0,@,@,n-1,n); /* insert line $n$ on line 0 */
-    LINK(0,@,@,n,1);
-      recursive_generate_PSLA(0, 0, n);
-      /* enter the recursion. With these parameters $0,0$,
-      the procedure
-|recursive_generate_PSLA| will skip the first loop and
-will then correctly scan the upper edges of the bottom face $F$ from right to left.
- */
-  LINK(0,@,@,n-1,1); // undo the insertion of line $n$
-}
-    
-@ Start with 2 pseudolines.
-
-  @<Start the generation@>=
-
-  LINK(1,@,@,0,2);
-  LINK(1,@,@,2,0);
-  LINK(2,@,@,0,1);
-  LINK(2,@,@,1,0);
-@qSUCC(0,0)=1; // artificial, makes it easier for |convert_to_PS_array|@>
-LINK(0,@,@,1,2); /* |LINK(0,@,@,2,3)| and |LINK(0,@,@,3,1)| will be established
-shortly in the first recursive call. */
-
-  recursive_generate_PSLA_start(3); 
-
-
-
-@
-@<Indicate Progress@>=
-if (n==n_max && countPSLA[n] % 50000000000==0) { // $5\times 10^{10}$
-
-printf("..%Ld.. ", countPSLA[n]);
-  PSLA Ps;
-  convert_to_PS_array(&Ps,n);
-  print_pseudolines_short(&Ps,n);
-@q  print_small(S, n_points);@>
-  fflush(stdout);
-}
-
-@
-@<Process the PSLA@>=
-    countPSLA[n]++;
-@<Update accession number counters@>@;
-@qif(n==n_max)  printf("%d\n",PRED(1,0));@>
-
-#if 0
-if(n==n_max && countPSLA[n]==50) { // print ``some'' example
-  PSLA Ps1,invPs1;
-  convert_to_PS_array(&Ps1,n);
-  convert_to_inverse_PS_array(&invPs1,n);
-  print_pseudolines_short(&Ps1,n);
-  printf("inverse ");  print_pseudolines_short(&invPs1,n+1);
-  print_wiring_diagram(n);
-  }
-#endif
-
-@<Gather statistics about the AOT, collect output@>@;
-@<Further processing of the AOT@>@;
-
-@*2 Unique identifiers, accession numbers.
-
-Reverse search implicitly imposes a tree structure on PSLAs: the
-parents of a PSLA with $n$ lines is the unique PSLA on $n-1$ lines from
-which it is generated.  We number the children of each node in the
-order in which they are generated, starting from 1.
-% This was an unintended mistake. I wanted % 0.
-The sequence of labels on the path
-from the root to a node gives a unique identifier to each node in the
-tree. (This is, however, specific to details of the enumeration
-algorithm: in which order edges are considered for crossing in the
-insertion, the choice of lexicographic criterion.)
-
-
-The purpose of this scheme is that it allows to identify a PSLA even if
-we parallelize the computation, and one thread of the program only
-visits certain branches of the tree.
-
- @<Global variables@>+=
-long long unsigned localCountPSLA[MAXN+3];
-
-@ @<Update accession number counters@>=
-    localCountPSLA[n]++;	
-    localCountPSLA[n+1]=0; // reset child counter
-
-
-@ @<Subr...@>=
-
-void print_id(int n)
-{
-  printf("%Ld",localCountPSLA[3]);
-  for_int_from_to(i,4,n)
-     printf(".%Ld",localCountPSLA[i]);
-}
-
 
 @*1 Statistics.
 Characteristics:
@@ -1363,7 +1485,7 @@ Characteristics:
 \item mirror symmetry, with or without fixpoint on the hull (3 possibilities).
 \end{itemize}
 
-|OxPSLAcount| gives OAOT of point sets with a marked point on the convex hull.
+|PSLAcount| gives OAOT of point sets with a marked point on the convex hull.
 http://oeis.org/A006245 (see below) is the same sequence with $n$ shifted by 0.
 
 @d NO_MIRROR 0
@@ -1374,7 +1496,7 @@ http://oeis.org/A006245 (see below) is the same sequence with $n$ shifted by 0.
 
   long long unsigned countPSLA[MAXN+2], countO[MAXN+2], countU[MAXN+2];
   
-long long unsigned OxPSLAcount[MAXN+2];
+long long unsigned PSLAcount[MAXN+2];
 /*A006245, Number of primitive sorting networks on $n$ elements; also number of rhombic tilings of $2n$-gon.
 Also the number of oriented matroids of rank 3 on $n$(?) elements. */
 /* 1, 1, 2, 8, 62, 908, 24698, 1232944, 112018190, 18410581880, 5449192389984
@@ -1402,7 +1524,7 @@ assert (classcount[n][k][p][t]==0);
   countPSLA[2]=1;
 countO[3]=
 countU[3]=
-OxPSLAcount[2]=
+PSLAcount[2]=
 xPSLAcount[2]=
 1;
 // All other counters are automatically initialized to 0.
@@ -1435,7 +1557,7 @@ if(lex_smallest)
   if (is_symmetric)
   {
     countO[n_points]++;
-    OxPSLAcount[n]+=rotation_period;
+    PSLAcount[n]+=rotation_period;
      if(has_fixpoint)
         xPSLAcount[n]+=rotation_period/2+1;
 	// works for even and odd |rotation_period|
@@ -1445,7 +1567,7 @@ if(lex_smallest)
   else
   {
     countO[n_points]+=2;
-    OxPSLAcount[n]+=2*rotation_period;
+    PSLAcount[n]+=2*rotation_period;
     xPSLAcount[n]+=rotation_period;
   }
 
@@ -1465,7 +1587,7 @@ written to a file so that a python program can process it by defining
 an appropriate function |P|.
 
 @<Report statistics...@>=
-  printf("%20s%83s\n","#OxPSLA visited", "#xOPSLA computed from AOT");
+  printf("%20s%83s\n","#PSLA visited", "#PSLA computed from AOT");
 for_int_from_to(i,3,n_max+1) {
   long long symmetric =  2*countU[i] - countO[i];
   printf("n=%2d, #PSLA=%11Ld", i, countPSLA[i]);
@@ -1474,7 +1596,7 @@ for_int_from_to(i,3,n_max+1) {
   countU[i], 
 countO[i], symmetric
   );
-  printf("#OxPSLA=%11Ld, #xPSLA=%10Ld", OxPSLAcount[i], xPSLAcount[i]);
+  printf("#PSLA=%11Ld, #xPSLA=%10Ld", PSLAcount[i], xPSLAcount[i]);
 #endif
   printf("\n");
 
@@ -1493,14 +1615,14 @@ printf("passed %Ld, saved %Ld out of %Ld = %.2f%%\n", cpass, csaved,
   if (parts!=1)
   fprintf(reportfile,", split-level=%d, part %d of %d",
      split_level, part,parts);	
-  fprintf(reportfile,"\n#x N hull period mirror-type  NUM\n");                
-    for(small_int n=0; n<=n_max+1; n++)
+  fprintf(reportfile,"\n#x N hull period mirror-type  NUM\n");
+    for_int_from_to( n,0, n_max+1)
     { 
     char c = 'T'; /* total count */
       if (parts!=1 && n>split_level+1)
       c = 'P'; /* partial count */
-    for(small_int k=0; k<=n_max+1; k++)
-    for(small_int p=0; p<=n_max+1; p++)
+    for_int_from_to( k,0, n_max+1)
+    for_int_from_to( p,0, n_max+1)
     for(small_int t=0; t<3; t++)
       if (classcount[n][k][p][t])
   fprintf(reportfile,
@@ -1531,10 +1653,12 @@ explicitly computed ``large $\Lambda$-matrix''.
 exclude-files of nonrealizable AOTs */
 if(n==n_max && lex_smallest)
 {
-PSLA Ps;
-convert_to_PS_array(&Ps,n);
-print_pseudolines_compact(&Ps,n);
-printf(":");
+PSLA P;
+convert_to_PS_array(&P,n);
+compute_fingerprint(&P,n);
+ printf("%s:",fingerprint);
+@q print_pseudolines_compact(&P,n); @>
+@q printf(":"); @>
 print_id(n);printf("\n");
  }
 #endif
@@ -1543,15 +1667,15 @@ print_id(n);printf("\n");
 #define MID 5
 if(n==2*MID-2)
 {
-  PSLA Ps;
-  convert_to_PS_array(&Ps,n);
-@q  print_pseudolines_short(&Ps, n);@>
+  PSLA P;
+  convert_to_PS_array(&P,n);
+@q  print_pseudolines_short(&P, n);@>
   for_int_from_to(i, 2,MID-1)
   {
     boolean show = true;
     for_int_from_to(j, 1,n-1)
     {
-      int x = Ps[i][j];
+      int x = P[i][j];
       if(x==MID||x==1) break;
       printf("%c",TO_CHAR(x));
 
@@ -1563,7 +1687,7 @@ if(n==2*MID-2)
     boolean show = false;
     for_int_from_to(j, 1,n-1)
     {
-      int x = Ps[i][j];
+      int x = P[i][j];
      @q if (!show) printf(".");@>
       if (show)
         printf("%c",TO_CHAR(x));
@@ -1573,13 +1697,13 @@ if(n==2*MID-2)
     printf(i<n?"!":" ");
   }
   for_int_from_to(j, 1,n-1) {
-      int x = Ps[1][j];
+      int x = P[1][j];
       if (x==MID) break;
       printf("%c",TO_CHAR(x));}
   printf("!");
 
   for_int_from_to(j, 1,n-1){
-      int x = Ps[MID][j];
+      int x = P[MID][j];
       if (x==1) break;
       printf("%c",TO_CHAR(x));}
   printf("\n");
@@ -1589,8 +1713,8 @@ if(n==2*MID-2)
 
 
 #if 0
-PSLA inverse_Ps; // the orientation test is computed from this array.
-convert_to_inverse_PS_array(&inverse_Ps,n);
+PSLA inverse_P; // the orientation test is computed from this array.
+convert_to_inverse_PS_array(&inverse_P,n);
 @#
 small_matrix S;
 convert_to_small_lambda_matrix(&S, n_points);
@@ -1608,10 +1732,10 @@ convert_small_to_large(&S, &L, n_points);
   if (i!=j)
   for_int_from_to(k,0,n-1)
   if (k!=j && k!=i)
-  if(getOrientation(inverse_Ps,i,j,k) != L[i][j][k]) {
+  if(getOrientation(inverse_P,i,j,k) != L[i][j][k]) {
     @qprint_small(S, n_points);@>
   printf ("[%d,%d,%d]=%d!=%d\n", i,j,k,
-  getOrientation(inverse_Ps,i,j,k), L[i][j][k]);
+  getOrientation(inverse_P,i,j,k), L[i][j][k]);
   exit(1);
   }
   ;
@@ -1699,10 +1823,10 @@ small_int n)
 }
 
 
-@*2 Auxiliary routines and conversion to other formats.
+@*1 Auxiliary routines and conversion to other formats.
 
 @ Input: PSLA with $n$ lines $1\dts n$ plus line $0$ ``at $\infty$''.
-Output: small lambda matrix for AOT on $n+1$ points.
+Output: small $\lambda$-matrix $B$ for AOT on $n+1$ points.
 Line at $\infty$ corresponds to point 0 on the convex hull.
 @<Subr...@>=
 
@@ -1737,100 +1861,6 @@ void convert_to_small_lambda_matrix(small_matrix *B, int n)
 
 
 
-@ Prettyprinting of a wiring diagram
-
-
-@d TO_CHAR(i) ((char) (
-		       (i<10? (int)'0' : ((int)'A' - 10))
-		       + i))
-@d FILL_COLUMN {
-    for_int_from_to(p,0,n-1) {
-    buffer[2*p][column]=TO_CHAR(line_at[p]);
-    buffer[2*p+1][column]=' ';
-    }
-}
-
-@<Subr...@>=
-
-
-void print_wiring_diagram(int n)
-{ // ASCII, horizontal, column-wise
-  int current_crossing[MAXN+1]; // current crossing on each line
-  int line_at[MAXN+1]; // which line is on the $i$-th track
-  boolean crossing[MAXN]; /* is there a crossing between track $i$ and
-  $i+1$ */
-
-  char buffer[2*MAXN][MAXN*MAXN];
-  
-  for_int_from_to(j,0,n-1) {
-    current_crossing[j+1]=SUCC(j+1,0);
-    /* crossing $\#0$ with line 0 ``at $\infty$'' is not considered. */
-    line_at[j]=j+1;
-  }
-  crossing[n-1] = false;
-  int n_crossings = 0;
-  int column = 0;
-  
-  for_int_from_to(p,0,2*n-1) buffer[p][column]=' ';
-   @+   column++;//empty column
-  while(true)
-    {
-    // find where crossings occur, set array |crossing|$[0\dts n-2]$
-    boolean something_done = false;
-    for_int_from_to(p, 0,n-2)
-      {
-	int i = line_at[p];
-	int j = line_at[p+1];
-	crossing[p] =current_crossing[i]==j && current_crossing[j]==i;
-	if (crossing[p])
-	  {
-	    something_done = true;
-	    n_crossings++;
-	  }
-      }
-    FILL_COLUMN;
-    column++;
-    if (!something_done) break;
-    for_int_from_to(p,0,n-1){
-      buffer[2*p][column]='-';
-      buffer[2*p+1][column]=' ';
-    }
-    for_int_from_to(p,0,n-2)
-      {
-	if (crossing[p])
-	  {       // print the crossings
-	    buffer[2*p][column]=
-	    buffer[2*p+2][column]=' '; // erase the adjacent lines
-	    int i = line_at[p];
-	    int j = line_at[p+1];
-	    buffer[2*p+1][column]='X';
-	  }
-      }
-    column++;
-    for_int_from_to(p, 0,n-2)
-      {       // carry out the crossings
-	if(crossing[p])
-	  {
-	    int i = line_at[p];
-	    int j = line_at[p+1];
-	    current_crossing[i] = SUCC(i,current_crossing[i]);
-	    current_crossing[j] = SUCC(j,current_crossing[j]);
-	    line_at[p] = j;
-	    line_at[p+1] = i;
-	  }
-      }
-    }
-  for_int_from_to(p,0,2*n-2) {
-    buffer[p][column]=0; // finish the lines
-    printf("%s\n",buffer[p]); // and print them
-  }
-  assert(n_crossings*2 == n*(n-1));
-}
-
-
-@qLocal...@>
-
-@q  printf("Info: small matrix %u bytes.\n", (int) sizeof (small_matrix));@>
 
 
 
