@@ -20,7 +20,16 @@ The program is called with the parameters
 The pseudoline arrangments will be enumerated up to n pseudolines.
 This corresponds to AOTs with up to n+1 points.
 If a fileprefix is given, statistics about the enumerated AOTs are
-written to the text file fileprefix-n.txt, where n is the parameter.
+written to the text file fileprefix-n.txt, where n is the given parameter.
+A python script like "  .py" can be used to analyze this output and
+aggregate into interesting tables.
+
+The excludefile can be used to enumerate only _realizable_ AOTs with up to
+11 points. For this purpose the three files
+exclude11.txt, exclude10.txt (for up to 10 points), and exclude09.txt (for 9 points) are provided.
+
+The parameters "splitlevel parts part" are used separating the enumeration task
+into independent tasks for parallel
 
 # counting halving lines
 halving-lines.ch is a change-file for the CWEB system. It modifies the program
@@ -79,7 +88,7 @@ cweave NUMPSLA.w halving-lines.ch
    needs to have enough disk space for temporary files.
 9. Finally, merge the these files into the final exclude-files:
    ```
-   cp exclude9-raw.txt  exclude9.txt
+   cp exclude9-raw.txt  exclude09.txt
    python3 merge-non-realizable.py exclude09.txt exclude10-raw.txt exclude10.txt
    python3 merge-non-realizable.py exclude10.txt exclude11-raw.txt exclude11.txt
    ```
