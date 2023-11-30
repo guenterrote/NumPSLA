@@ -44,7 +44,7 @@ An experimental research tool for pseudoline arrangements and order types
    ```
    sort -t . -n -k1,1 -k2,2 -k3,3 -k4,4 -k5,5 -k6,6 -k7,7 -k8,8 -k9,9 -k10,10 non-r9.txt -o exclude9-raw.txt
    ```
-8. Repeat the above steps, for 10 and 11 points. Beware, the file A11 has 85.3 GBytes. For sorting, the computer
+8. Repeat the above steps for 10 and 11 points. Beware, the file A11 has 85.3 GBytes. For sorting, the computer
    needs to have enough disk space for temporary files.
 9. Finally, merge the these files into the final exclude-files:
    ```
