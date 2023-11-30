@@ -29,19 +29,24 @@ An experimental research tool for pseudoline arrangements and order types
    This will write a list of all 9-point AOTs
 
 4. Sort both files, using the sort command.
-5. Use the python prepare-non-realizable.py script to process the two sorted files:
+   ```
+   LANG=C sort A9 -o A9-sorted 
+   LANG=C sort DB9 -o DB9-sorted 
+   ```
+   The LANG=C prefix is important; otherwise lowercase and uppercase letters may be folded together in the sort.
+6. Use the python prepare-non-realizable.py script to process the two sorted files:
    ```
    python3 prepare-non-realizable.py A9-sorted DB9-sorted non-r9.txt
    ```
    The resulting file contains the Dewey decimal notations of the non-realizable AOTs.
 
-6. Sort non-r9.txt lexicographically, taking care to sort the indidivual entries numerically:
+7. Sort non-r9.txt lexicographically, taking care to sort the indidivual entries numerically:
    ```
    sort -t . -n -k1,1 -k2,2 -k3,3 -k4,4 -k5,5 -k6,6 -k7,7 -k8,8 -k9,9 -k10,10 non-r9.txt -o exclude9-raw.txt
    ```
-7. Repeat the above steps, for 10 and 11 points. Beware, the file A11 has 85.3 GBytes. The computer
+8. Repeat the above steps, for 10 and 11 points. Beware, the file A11 has 85.3 GBytes. For sorting, the computer
    needs to have enough disk space for temporary files.
-8. Finally, merge the these files into the final exclude-files:
+9. Finally, merge the these files into the final exclude-files:
    ```
    cp exclude9-raw.txt  exclude9.txt
    python3 merge-non-realizable.py exclude09.txt exclude10-raw.txt exclude10.txt
