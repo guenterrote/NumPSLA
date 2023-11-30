@@ -3,15 +3,26 @@ An experimental research tool for pseudoline arrangements and order types
 
 ## Workflow for generating exclude-files for non-realizable AOTs of 9, 10, and 11 points
 
-1. Compile the program with the switch generatelist=1 (and readdatabase=0)
-2. Run the resulting program as follows (assuming it is called "generate")
+0. Obtain the order-type database files. Up to 10 points, they can be downloaded from
+   http://www.ist.tugraz.at/aichholzer/research/rp/triangulations/ordertypes/.
+   The database for 11 points can be obtained from Oswin Aichholzer directly.
+   It consists of 94 files with a total of 102,718,567,908 bytes (102.7 GBytes),
+   44 bytes per order type.
+   We assume that the order types with up to 10 points are stored in the
+   current directory in the files
+   otypes10.b16, otypes09.b16, otypes08.b08, etc.,
+   and the order types with 11 points are stored 
+   in a subdirectory Ordertypes with names
+   Ordertypes/ord11_00.b16 ... Ordertypes/ord11_93.b16
+2. Compile the program with the switch generatelist=1 (and readdatabase=0)
+3. Run the resulting program as follows (assuming it is called "generate")
    ```
    ./generate 8 > A9
    ```
    This will write a list of all 9-point AOTs. (The parameter 8 is correct!)
 
-3. Compile the program with the switch readdatabase=1
-4. Run the resulting program as follows
+4. Compile the program with the switch readdatabase=1
+5. Run the resulting program as follows
    ```
    ./readDB 8 > DB9
    ```
