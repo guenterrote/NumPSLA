@@ -26,7 +26,9 @@ An experimental research tool for pseudoline arrangements and order types
    ```
    ./readDB 8 > DB9
    ```
-   This will write a list of all 9-point AOTs
+   This will write the list of all 9-point OTs. (This file may be useful as a
+   crossreference from the fingerprint codes into the database, which
+   contains the coordinates of a realizing point set.)
 
 4. Sort both files, using the sort command.
    ```
