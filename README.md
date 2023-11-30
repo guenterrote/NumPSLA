@@ -1,6 +1,35 @@
 # NumPSLA
 An experimental research tool for pseudoline arrangements and order types
 
+# The main enumeration program
+NumPSLA.w is written in CWEB, it contains simultaneously the program (in C) and the documentation (in LaTeX)
+```
+ctangle NumPSLA.w
+```
+generates the C-program NumPSLA.c.
+```
+cweave NUMPSLA.w
+```
+generates the LaTeX-file NumPSLA.tex.
+For convenience, the pdf-Version of this file is available as NumPSLA-pdf.pdf.
+
+The program is called with the parameters
+```
+./NumPSLA n [-exclude excludefile] [splitlevel parts part] [fileprefix]
+```
+The pseudoline arrangments will be enumerated up to n pseudolines.
+This corresponds to AOTs with up to n+1 points.
+If a fileprefix is given, statistics about the enumerated AOTs are
+written to the text file fileprefix-n.txt, where n is the parameter.
+
+# counting halving lines
+halving-lines.ch is a change-file for the CWEB system. It modifies the program
+to count the halving-lines of each AOT.
+```
+ctangle NumPSLA.w halving-lines.ch -o count-halving.c
+cweave NUMPSLA.w halving-lines.ch
+```
+
 ## Workflow for generating exclude-files for non-realizable AOTs of 9, 10, and 11 points
 
 0. Obtain the order-type database files. Up to 10 points, they can be downloaded from
