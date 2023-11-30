@@ -2,7 +2,9 @@
 An experimental research tool for pseudoline arrangements and order types
 
 # The main enumeration program
-NumPSLA.w is written in CWEB. It contains simultaneously the program (in C) and the documentation (in LaTeX).
+NumPSLA.w is written in CWEB (the CWEB system of structured documentation of Donald E. Knuth and Silvio Levy,
+http://tug.ctan.org/info/knuth/cwebman.pdf).
+It contains simultaneously the program (in C) and the documentation (in LaTeX).
 ```
 ctangle NumPSLA.w
 ```
