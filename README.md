@@ -34,6 +34,18 @@ The excludefile can be used to enumerate only _realizable_ AOTs with up to
 The parameters "`splitlevel parts part`" are used separating the enumeration task
 into independent tasks for parallel
 
+# Supporting Python programs
+
++ `NumPSLA-basic.py`
+  
+  This is
+
++ `wiring_diagram.py`
+
+  a function to draw a wiring diagram of a PSLA that is stored in the `SUCC` array.
+  By default, it draws an ASCII-art representation. With the option `ipe=True`,
+  it will generate an IPE-file. For this, the module `ipestart.py` is required.
+
 # counting halving lines
 halving-lines.ch is a change-file for the CWEB system. It modifies the program
 to count the halving-lines of each AOT.
