@@ -12,7 +12,7 @@ generates the C-program `NumPSLA.c`.
 ```
 cweave NumPSLA.w
 ```
-generates the LaTeX-file `NumPSLA.tex`.
+generates the LaTeX-file `NumPSLA.tex`. `NumPSLA.w` includes another CWEB file, `readDataBase.w`.
 For convenience, the pdf-Version of this file is available as `NumPSLA-pdf.pdf`.
 
 The program is called with the parameters
