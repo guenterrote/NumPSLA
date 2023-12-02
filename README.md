@@ -66,6 +66,7 @@ with the python program `aggregate-reportfiles.py`.
 
 # Determining the crossing number and counting halving lines
 `crossing-number-plus-halving-lines.ch` is a change-file for the CWEB system. It modifies the program
+to determine the number of crossings of the complete graph and
 to count the halving-lines of each AOT.
 ```
 ctangle NumPSLA.w crossing-number-plus-halving-lines.ch -o count-crossing.c
