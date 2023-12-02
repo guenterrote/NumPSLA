@@ -46,11 +46,16 @@ with the python program `aggregate-reportfiles.py`.
 
 + `NumPSLA-basic.py`
   
-  This is
+  This is a basic enumeration program, mainly for demonstrating how
+  simple the enumeration algorithm ist. When provided with a number
+  n on the command line,  it will count all x-monotone pseudoline arrangments with at most n
+  lines by running through each of them individually.
+  By including the module `wiring_diagram.py`, one can for example modify
+  the program to print wiring diagrams of all arrangements.
 
 + `wiring_diagram.py`
 
-  a function to draw a wiring diagram of a PSLA that is stored in the `SUCC` array.
+  contains a function to draw a wiring diagram of a PSLA that is stored in the `SUCC` array.
   By default, it draws an ASCII-art representation. With the option `ipe=True`,
   it will generate an IPE-file. For this, the module `ipestart.py` is required.
 
