@@ -31,7 +31,7 @@ The excludefile can be used to enumerate only _realizable_ AOTs with up to
 `exclude11.txt`, `exclude10.txt` (for up to 10 points), and `exclude09.txt` (for 9 points) are provided.
 `exclude11.txt` is provided in gzipped-format because its uncompressed size is 184.6 MBytes.
 
-The parameters "`splitlevel parts part`" are used separating the enumeration task
+The parameters "`splitlevel parts part`" are used to separate the enumeration task
 into independent tasks for parallel processing. If the _splitlevel_ is 8, for example, then all
 PSLAs with 8 lines are visited, and we can imagine them as nodes on level 8 of
 the tree, numbered consecutively.
