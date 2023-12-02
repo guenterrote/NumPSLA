@@ -79,7 +79,7 @@ python3 makereport.py crossing+halving-results-12.txt
 will read these data and produce some tables of data
 
 # Benchmark
-As a benchmark, we read files from the order-type database and compute their convex hull.
+As a benchmark, we read point sets from the order-type database and compute their convex hull.
 This is done by compiling the program with the change-file `benchmark.ch`:
 ```
 ctangle NumPSLA.w benchmark.ch
