@@ -64,6 +64,13 @@ cweave NumPSLA.w crossing-number-plus-halving-lines.ch -o NumPSLA-crossing.tex
 For convenience, the pdf-Version of this file is available as `NumPSLA-crossing.pdf`.
 The results for up to 12 points are in the file `crossing+halving-results-11.txt`.
 
+# Benchmark
+As a benchmark, we read files from the order-type database and compute their convex hull.
+This is done by compiling the program with the change-file `benchmark.ch`:
+```
+ctangle NumPSLA.w benchmark.ch
+```
+
 # Workflow for generating exclude-files for non-realizable AOTs of 9, 10, and 11 points
 
 0. Obtain the order-type database files. Up to 10 points, they can be downloaded from
