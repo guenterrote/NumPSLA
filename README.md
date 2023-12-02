@@ -47,10 +47,10 @@ with the python program `aggregate-reportfiles.py`.
 + `NumPSLA-basic.py`
   
   This is a basic enumeration program, mainly for demonstrating how
-  simple the enumeration algorithm ist. When provided with a number
+  simple the enumeration algorithm is. When provided with a number
   n on the command line,  it will count all x-monotone pseudoline arrangments with at most n
   lines by running through each of them individually.
-  By including the module `wiring_diagram.py`, one can for example modify
+  By importing the module `wiring_diagram.py`, one can for example modify
   the program to print wiring diagrams of all arrangements.
 
 + `wiring_diagram.py`
