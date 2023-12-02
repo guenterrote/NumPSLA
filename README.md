@@ -35,7 +35,7 @@ The parameters "`splitlevel parts part`" are used separating the enumeration tas
 into independent tasks for parallel. If the _splitlevel_ is 8, then all
 PSLAs with 8 lines are visited, and we can imagine them as nodes on level 8 of
 the tree, which are numbered consecutively.
-Then the program will expand only those nodes whose number if congruent to _part_ modulo _parts_.
+Then the program will expand only those nodes whose number is congruent to _part_ modulo _parts_.
 
 For example, starting the program with `NumPSLA 11 8 100 0 out`, `NumPSLA 11 8 100 1 out`, ..., `NumPSLA 11 8 100 99 out`, 
 will lead to 100 independent runs that collectively go to all nodes at level 11.
