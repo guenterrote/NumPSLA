@@ -32,7 +32,15 @@ The excludefile can be used to enumerate only _realizable_ AOTs with up to
 `exclude11.txt` is provided in gzipped-format because its uncompressed size is 184.6 MBytes.
 
 The parameters "`splitlevel parts part`" are used separating the enumeration task
-into independent tasks for parallel
+into independent tasks for parallel. If the _splitlevel_ is 8, then all
+PSLAs with 8 lines are visited, and we can imagine them as nodes on level 8 of
+the tree, which are numbered consecutively.
+Then the program will expand only those nodes whose number if congruent to _part_ modulo _parts_.
+
+For example starting the program with `NumPSLA 11 8 100 0 out`, `NumPSLA 11 8 100 1 out`, ..., `NumPSLA 11 8 100 99 out`, 
+will lead to 100 independent runs that collectively go to all nodes at level 11.
+The outputs in the files starting with `out` can then be aggregated into a single file
+with the python program `aggregate-reportfiles.py`.
 
 # Supporting Python programs
 
@@ -46,14 +54,15 @@ into independent tasks for parallel
   By default, it draws an ASCII-art representation. With the option `ipe=True`,
   it will generate an IPE-file. For this, the module `ipestart.py` is required.
 
-# counting halving lines
-halving-lines.ch is a change-file for the CWEB system. It modifies the program
+# Determining the crossing number and counting halving lines
+`crossing-number-plus-halving-lines.ch` is a change-file for the CWEB system. It modifies the program
 to count the halving-lines of each AOT.
 ```
-ctangle NumPSLA.w halving-lines.ch -o count-halving.c
-cweave NumPSLA.w halving-lines.ch -o NumPSLA-halving.tex
+ctangle NumPSLA.w crossing-number-plus-halving-lines.ch -o count-crossing.c
+cweave NumPSLA.w crossing-number-plus-halving-lines.ch -o NumPSLA-crossing.tex
 ```
-For convenience, the pdf-Version of this file is available as NumPSLA-halving.pdf
+For convenience, the pdf-Version of this file is available as `NumPSLA-crossing.pdf`.
+
 ## Workflow for generating exclude-files for non-realizable AOTs of 9, 10, and 11 points
 
 0. Obtain the order-type database files. Up to 10 points, they can be downloaded from
