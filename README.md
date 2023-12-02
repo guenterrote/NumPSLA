@@ -42,7 +42,7 @@ will lead to 100 independent runs that collectively go to all nodes at level 11.
 The outputs in the files starting with `out` can then be aggregated into a single file
 with the python program `aggregate-reportfiles.py`.
 
-# Supporting Python programs
+# Utility programs in Python
 
 + `NumPSLA-basic.py`
   
@@ -53,6 +53,11 @@ with the python program `aggregate-reportfiles.py`.
   a function to draw a wiring diagram of a PSLA that is stored in the `SUCC` array.
   By default, it draws an ASCII-art representation. With the option `ipe=True`,
   it will generate an IPE-file. For this, the module `ipestart.py` is required.
+
++ `NumPSLA-show.py`
+
+  produce the wiring diagram of either a single PSLA, based on the Dewey decimal code,
+  or of several PSLAs read from a file, optionally as an IPE file.
 
 # Determining the crossing number and counting halving lines
 `crossing-number-plus-halving-lines.ch` is a change-file for the CWEB system. It modifies the program
