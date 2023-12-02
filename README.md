@@ -62,7 +62,16 @@ ctangle NumPSLA.w crossing-number-plus-halving-lines.ch -o count-crossing.c
 cweave NumPSLA.w crossing-number-plus-halving-lines.ch -o NumPSLA-crossing.tex
 ```
 For convenience, the pdf-Version of this file is available as `NumPSLA-crossing.pdf`.
-The results for up to 12 points are in the file `crossing+halving-results-11.txt`.
+The results for up to 12 points are in the file `crossing+halving-results-12.txt`.
+For each combination of the 6 parameters
+n, hull, period, mirror-type, halving-lines, crossing-number,
+with n<=12, for which a PSLA with those characteristics exists,
+there is a line in the file which gives the number of PSLAs with those characteristics.
+The script
+```
+python3 makereport.py crossing+halving-results-12.txt
+```
+will read these data and produce some tables of data
 
 # Benchmark
 As a benchmark, we read files from the order-type database and compute their convex hull.
