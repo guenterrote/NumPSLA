@@ -12,7 +12,7 @@ compute the number of hull points.
 @x
 @*3 Orientation test for points.
 @y
-long long unsigned nums[MAXN+1];
+long long unsigned nums[MAXN+2];
 
 @*3 Orientation test for points.
 @z
@@ -60,6 +60,6 @@ long long unsigned read_count = 0;@/
     }
   close(databasefile);
  @q printf("%Ld point sets.\n",counter); @>
-  for(int i=0; i<=n_points; i++)
+  for_int_from_to(i,0,n_points)
     if(nums[i]) printf("%2d: %10Ld\n",i,nums[i]);
 @z

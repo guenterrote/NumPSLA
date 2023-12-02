@@ -76,14 +76,14 @@ for n,(x,y) in enumerate(zip(AOT,rAOT)):
 	 
 \fi
 
-to be done: implement the \texttt{-exclude} option.
+ The \texttt{-exclude} option.
 %Streamline the \texttt{screening} program.
 
 Using inverse-PSLA makes
 \texttt{screening} SLOWER!
 Only good if combined with screening one level before!
 Computing inverse-PSLA one level before max-n costs almost nothing.
-
+(Whatever that means!)
 
 @*Introduction. The purpose of this program is to enumerate
 ORIENTED
@@ -91,10 +91,7 @@ abstract order types.
 (sometimes also called
 generalized configuration or a pseudoconfiguration)
 
-
-It does it via pseudoline arrangements, and it
-NONONO!!!!!!!!!!!!!!! uses the Reverse Search method of Avis and
-Fukuda. The method allows to enumerate combinatorial objects without
+Programm enumerates the objects without
 repetition and without much storage.
 
 We consider nondegenerate cases only: no three points on a line.
@@ -190,18 +187,9 @@ simple {projective} pseudoline arrangements with a marked cell.
 According to OEIS, three different sequences give the number of
 primitive sorting networks on $n$ elements: A006245, A006246, A006248.
 
-
-@ The program.
+@*1 The main program.
 
 @d MAXN 15 /* The maximum number of pseudolines for which the program will work. */
-@d debug 0
-@d profile 1 // gather statistics and profiling information
-@d enumAOT 1 /* purpose is enumeration of AOTs */
-/* Other purposes might be enumeration of PSLAs */
-@d readdatabase 0 // version for reading point sets of the order-type database
-@d generatelist 1  /* List all PSLAs plus their IDs, as preparation for generating
-exclude-files of nonrealizable AOTs, requires |enumAOT==1|. */
-
 
 
 @p
@@ -218,8 +206,8 @@ int main (int argc,char* argv[])
   @<Parse the command line@>;
 #if readdatabase /*  reading from the database
 */
-@q   (OMITTED) @>
  @<Read all point sets...@>@;
+ return 0;
 #endif
 #if enumAOT
   @<Initialize statistics and open reporting file@>;
@@ -229,6 +217,28 @@ int main (int argc,char* argv[])
   return 0;
 }
 
+@*1 Preprocessor switches.
+
+The program has the enumeration procesure at its core, but it can be
+configured to
+perfom different tasks, by setting  preprocessor switches at
+compile-time.
+
+We assume that the program will anyway be modified and extended for specific
+counting or enumeration tasks, and it makes sense to
+set these options at compile-time.
+
+(Other options, which are less permanent, can be set by
+command-line switches.)
+
+@d enumAOT 1 /* purpose is enumeration of AOTs */
+/* Other purposes might be enumeration of PSLAs */
+@d readdatabase 0 // version for reading point sets of the order-type database
+@d generatelist 0  /* List all PSLAs plus their IDs, as preparation for generating
+exclude-files of nonrealizable AOTs, requires |enumAOT==1|. */
+@d profile 1 // gather statistics and profiling information
+
+
 @ Type definitions.
 
 
@@ -236,6 +246,7 @@ int main (int argc,char* argv[])
 
 typedef enum {@+@!false,@+@!true @+ } boolean;
 @#
+
 
 @ Standard libraries
 @<Include standard libaries@>=
@@ -381,7 +392,7 @@ int succ[MAXN+1][MAXN+1];
 int pred[MAXN+1][MAXN+1];
 
 
-@* Recursive Enumeration.
+@*1 Recursive Enumeration.
 
 We extend an $x$-monotone pseudoline arrangement
  of $n-1$ lines $1,\dts, n-1$, 
@@ -416,20 +427,23 @@ its endpoint is the crossing with |k_right|.
   int jplus = k_right;
 @q  printf("enter through %d right %d n %d\n",j,jplus,n);@>
   while(jplus>j)
-    { // find right vertex of the cell $F$
+    { // find right vertex of the current cell $F$
       int jplusold = jplus;
       jplus = SUCC(jplus,j);
       j = jplusold;
 @q      printf("succ j %d j+ %d n %d\n",j,jplus,n);@>
-    }
+}
+// the right vertex is the intersection of |j| and |jplus|
   if (jplus==0) { // $F$ is unbounded
     if (j==n-1 )
       { // $F$ is the top face.
 	LINK(n,@,@,entering_edge,0);    /* complete the insertion of line $n$ */
-	@<Process the PSLA@>@;
-@<Indicate Progress@>;
-  
-	    @q<Process the PSLA@>@;
+	@<Update counters@>@;
+        @<Indicate Progress@>;
+	@<Check for exclusion...@>@;
+        if (is_excluded) return;
+        @<Gather statistics about the AOT, collect output@>@;
+@<Further processing of the AOT@>@;
 	if (n<n_max)
           if (n!=split_level || countPSLA[n]%parts == part) {
 #if enumAOT // screening one level below
@@ -439,7 +453,7 @@ its endpoint is the crossing with |k_right|.
 }
 	if(hopeful)
 #endif
-{     localCountPSLA[n+1]=1; // reset child counter
+{     localCountPSLA[n+1]=0; // reset child counter
 	    recursive_generate_PSLA_start( n+1);
             /* thread the next pseudoline */
 @q            if (localCountPSLA[n+1]>max_children[n])@>
@@ -465,7 +479,10 @@ its endpoint is the crossing with |k_right|.
       int k_left = jplus = PRED(j,k_right);
 @q      printf("MID on line j %d between %d and %d (n=%d)\n",j,k_left,k_right,n);@>
 
-LINK(j,@,@,k_left,n); // insert the crossing
+// $j$ is the exiting edge
+
+LINK(j,@,@,k_left,n); /* insert the crossing to prepare for the
+recursive call */
       LINK(j,@,@,n,k_right);
 
       LINK(n,@,@,entering_edge,j);
@@ -523,26 +540,94 @@ printf("..%Ld.. ", countPSLA[n]);
 }
 
 @
-@<Process the PSLA@>=
+@<Update counters@>=
     countPSLA[n]++; // update accession number counter
     localCountPSLA[n]++; // update local counter
 @qif(n==n_max)  printf("%d\n",PRED(1,0));@>
 
-#if 0
-if(n==n_max && countPSLA[n]==50) { // print ``some'' example
-  PSLA P1,invP1;
-  convert_to_PS_array(&P1,n);
-  convert_to_inverse_PS_array(&invP1,n);
-  print_pseudolines_short(&P1,n);
-  printf("inverse ");  print_pseudolines_short(&invP1,n+1);
-  print_wiring_diagram(n);
-  }
-#endif
+@*1 Handling the exclude-file.
 
-@<Gather statistics about the AOT, collect output@>@;
-@<Further processing of the AOT@>@;
+The array |excluded_code[3@t\ldots@>excluded_length]| contains the decimal code
+of the next PSLA that should be excluded from the enumeration.
+During the enumeration, the decimal code of the currently visited tree node
+(as stored in |localCountPSLA|) agrees with
+|excluded_code| up to position |matched_length|.
 
-@* Conversion between different representations.
+It is assumed that the codes in the exclude-file are sorted in
+strictly increasing lexicographic order, and no code is a prefix of
+another code.
+
+ @<Global variables@>+=
+ unsigned excluded_code[MAXN+3];
+ int excluded_length = 0;
+ int matched_length = 0; /* These initial values will never lead to
+ any match. */
+ FILE *exclude_file;
+char exclude_file_line[100];
+
+@
+@<Open the exclude-file and read first line@>=
+ exclude_file = fopen(exclude_file_name, "r");@;
+ @<Get the next excluded decimal code...@>@;
+ matched_length = 2;
+
+
+ @ I don't know why the following program piece is so badly formatted
+ by \texttt{cweave}.
+ @<Get the next excluded decimal code from the exclude-file@>=
+ do {
+if (fscanf(exclude_file, "%s\n", exclude_file_line)!=EOF)
+  { 
+    char *str1 = exclude_file_line;
+    char *token, *saveptr;
+    excluded_length = 2;  @/
+    while (true)
+    {
+      token = strtok_r(str1, ".", &saveptr);
+      if (token == NULL)
+         break;
+@q      printf("%d: %s<<\n", excluded_length, token); @>
+      assert (excluded_length<MAXN+3-1);
+      excluded_code[++excluded_length] = atoi(token);
+      str1 = NULL;
+    }
+    }
+    else
+    {
+  excluded_length = 0; // end of file reached.
+  fclose(exclude_file);
+}
+} while (excluded_length>n_max); // patterns longer than |n_max| are filtered.
+
+  @ (The following program piece could be accelerated if the exclude-file
+  would not store every decimal code completely but
+  indicate only the deviation from the previous code.)
+@<Determine the matched length |matched_length|@> =
+      matched_length = 2;
+      while(excluded_code[matched_length+1] ==
+      localCountPSLA[matched_length+1] &&
+      matched_length < excluded_length &&
+      matched_length < n)@/
+@q      {print_id(n);  printf(" ++%Ld\n",countPSLA[n]); @>
+      matched_length ++;
+@q        printf(" ++%d\n",matched_length); } @>
+@
+
+@<Check for exclusion and set the flag |is_excluded| @>=
+boolean is_excluded = false;
+if (n==matched_length+1 &&
+localCountPSLA[n]==excluded_code[n])
+{
+  matched_length = n;
+  if (matched_length == excluded_length) {
+    // skip this PSLA and the whole subtree
+    is_excluded = true;
+    @<Get the next excluded decimal code...@>@;
+    @<Determine the matched length |matched_length|@>
+}
+}
+    
+@*1 Conversion between different representations.
 @
 Convert from linked list to array.
 
@@ -708,19 +793,19 @@ we parallelize the computation, and one thread of the program only
 visits certain branches of the tree.
 
  @<Global variables@>+=
-long long unsigned localCountPSLA[MAXN+3];
+ unsigned localCountPSLA[MAXN+3];
 
 
 @ @<Subr...@>=
 
 void print_id(int n)
 {
-  printf("%Ld",localCountPSLA[3]);
+  printf("%d",localCountPSLA[3]);
   for_int_from_to(i,4,n)
-     printf(".%Ld",localCountPSLA[i]);
+     printf(".%d",localCountPSLA[i]);
 }
 
-@*Output.
+@*1Output.
 
 @ Prettyprinting of a wiring diagram. Fill a buffer of lines
 columnwise from left to right.
@@ -906,16 +991,22 @@ for_int_from_to(j,1,n-1)
     fingerprint[charpos++] =  '\0';
   }
 
-  
-@qLocal...@>
+@  
+  @<Print PSLA-fingerprint@>+=
+  {
+PSLA P;
+convert_to_PS_array(&P,n);
+compute_fingerprint(&P,n);
+ printf("%s:",fingerprint);
+ }
 
 @q  printf("Info: small matrix %u bytes.\n", (int) sizeof (small_matrix));@>
 
 
 
-@*Abstract order types.
+@*1Abstract order types.
 
-@*1 Lexmin for PSLA Representation.
+@*2 Lexmin for PSLA Representation.
 
 In order to generate every AOT only once, we check whether the
 representation is smallest among all PSLAs that produce
@@ -980,6 +1071,7 @@ small_int *hulledges, small_int hullsize)
 @*2 Compute the lex-smallest representation.
 
 The input is taken from the global |succ| and |pred| arrays.
+The function assumes that |hulledges| and |hullsize| have been computed.l)
 
 @<Subr...@>=
 void compute_lex_smallest_PSLA(PSLA *P, small_int n,
@@ -1576,15 +1668,16 @@ if(lex_smallest)
   MIRROR_WITHOUT_FIXPOINT] ++;
 }
 
-#if debug
+#if 0 // debugging
 printf("found n=%d. %Ld ",n_points,countO[n_points]);
 print_small(S,n_points);
 #endif
 
 @
 
-written to a file so that a python program can process it by defining
-an appropriate function |P|.
+written to a file so that a subsequent program
+can conveniently read and process it.
+
 
 @<Report statistics...@>=
   printf("%20s%83s\n","#PSLA visited", "#PSLA computed from AOT");
@@ -1651,16 +1744,20 @@ explicitly computed ``large $\Lambda$-matrix''.
 
 #if generatelist /* List all PSLAs plus their IDs, as preparation for generating
 exclude-files of nonrealizable AOTs */
-if(n==n_max && lex_smallest)
-{
-PSLA P;
-convert_to_PS_array(&P,n);
-compute_fingerprint(&P,n);
- printf("%s:",fingerprint);
-@q print_pseudolines_compact(&P,n); @>
-@q printf(":"); @>
-print_id(n);printf("\n");
- }
+if(n==n_max && lex_smallest) {
+   @<Print PSLA-fingerprint@>
+print_id(n);printf("\n"); }
+#endif
+@qprint_id(n); printf(" .. %d",matched_length); printf(" --%Ld\n",countPSLA[n]);@>
+#if 0
+if(n==n_max && countPSLA[n]==50) { // print ``some'' example
+  PSLA P1,invP1;
+  convert_to_PS_array(&P1,n);
+  convert_to_inverse_PS_array(&invP1,n);
+  print_pseudolines_short(&P1,n);
+  printf("inverse ");  print_pseudolines_short(&invP1,n+1);
+  print_wiring_diagram(n);
+  }
 #endif
 
 #if 0  // estimate size of possibly subproblems for d\&c Ansatz
@@ -1864,8 +1961,8 @@ void convert_to_small_lambda_matrix(small_matrix *B, int n)
 
 
 
-@
-@d PRINT_USAGE     printf(
+@*1 Command-line arguments.
+@d PRINT_INSTRUCTIONS     printf(
 "Usage: %s n [-exclude excludefile] [splitlevel parts part] [fileprefix]\n", argv[0]);
 
 @<Parse...@>=
@@ -1875,7 +1972,7 @@ n_max = 7;
 else {
   if (argv[1][0]=='-') { /* first argument ``\texttt{--help}'' gives
     help message. */
-    PRINT_USAGE;
+    PRINT_INSTRUCTIONS;
     exit(0);
 }
  n_max = atoi(argv[1]);
@@ -1893,12 +1990,13 @@ if (argc>=3)
   if(strcmp(argv[2],"-exclude")==0) {
     if (argc>=4)
     {
-      excludefile = argv[3];
+      exclude_file_name = argv[3];
       argshift = 2;
-      printf("Excluding entries from file %s.\n", excludefile);
+      printf("Excluding entries from file %s.\n", exclude_file_name);
+      @<Open the exclude-file and read first line@>
     }
     else {
-      PRINT_USAGE;
+      PRINT_INSTRUCTIONS;
       exit(1);
     }
   }
@@ -1931,7 +2029,7 @@ else
 small_int n_max,split_level;
 unsigned int parts=1000,part=0;
 char* fileprefix = "reportPSLA";
-char* excludefile = 0;
+char* exclude_file_name = 0;
 char fname[200] = "";
 FILE *reportfile = 0;
 
@@ -1939,10 +2037,10 @@ FILE *reportfile = 0;
 
 @
 \tableofcontents
-
+\iftrue % to offset a dangling \fi from somewhere
 \end{document}
 %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Local Variables:
 %%% mode: LaTeX
-%%% compile-command: "ctangle enumPSLA.w && pdflatex enumPSLA"
+%%% compile-command: "ctangle NumPSLA.w && pdflatex NumPSLA"
 %%% End:

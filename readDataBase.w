@@ -36,13 +36,14 @@ typedef int_least64_t large_int; /* for intermediate calculations */
 
 
 
-@*3 Turn point set into PSLA.
+@*3 Turn point set with coordinates into PSLA.
 
 We insert the lines one by one into the arrangement.  This is simular
 to the insertion of line $n$ in the recursive enumeration procedure.
 The difference is that we don't try all possibilities for the edge
 through which line $n$ exits, but we choose the correct edge the
 by orientation test.
+By the zone theorem, the insertion of line $n$ takes $O(n)$ time.
 
 We have $n$ points. The first point (point $0$) is on the convex hull and the
 other points are sorted around this point.
@@ -121,7 +122,7 @@ void insert_line(int n)
 
 void swap_all_bytes(int n)
 {
-  for(int i=0; i<n; i++)
+  for_int_from_to(i,0,n-1)
     {
       points[i].x = (points[i].x>>8) | (points[i].x<<8);
       points[i].y = (points[i].y>>8) | (points[i].y<<8);
@@ -132,25 +133,13 @@ void swap_all_bytes(int n)
 @
 @<Read all point sets of size |n_max+1| from the database and process them@>=
 int  n_points = n_max+1;
-read_DB(n_points);
-
-@  
-@<Subro...@>=  
-long long unsigned read_count = 0;@/
-
-void read_DB(int n_points)
-{
   int bits = n_points >=9 ? 16 : 8;
 
-
   char inputfile [60];
-  snprintf(inputfile, 29, "otypes%02d.b%02d",n_points,bits);
   int record_size = (bits/8)*2*n_points;
-  printf("Reading order types of %d points", n_points);
-  if (n_points<11)
-    printf(" from file %s", inputfile);
+  printf("Reading order types of %d points\n", n_points);
   printf(".\n");
-  printf("One record is %d bytes long.\n", record_size);
+  printf("One record is %d bytes long.\n", record_size); @/
   boolean is_big_endian = (*(uint16_t *)"\0\xff" < 0x100);
   if (bits>8) {
   if (is_big_endian)
@@ -160,22 +149,28 @@ void read_DB(int n_points)
   }     
 
   if (n_points<11) {
-    @<Open and read database file@>
+    snprintf(inputfile, 60, "otypes%02d.b%02d",n_points,bits);
+     read_database_file(inputfile, bits, record_size, n_points,  is_big_endian);
     }
   else
     for_int_from_to(num_db, 0, 93) {
-      snprintf(inputfile, 29, "Ordertypes/ord%02d_%02d.b16",
+      snprintf(inputfile, 60, "Ordertypes/ord%02d_%02d.b16",
         n_points, num_db);
-    printf("Reading from file %s\n", inputfile);
-    @<Open and read database file@>
+     read_database_file(inputfile, bits, record_size, n_points,  is_big_endian);
 }
   printf("%Ld point sets were read from the file(s).\n",read_count);
 
-}
 
-@ Read the file. (This should really be a function and not a macro!)
- @<Open and read database file@>=
-  int databasefile = open(inputfile,O_RDONLY);
+@ Read the file.
+Open and read database file and process the input points-
+@<Subro...@>=
+long long unsigned read_count = 0;@/
+
+void read_database_file(char *inputfile, int bits, int record_size,
+ int n_points, boolean is_big_endian
+) {
+    printf("Reading from file %s\n", inputfile);
+    int databasefile = open(inputfile,O_RDONLY);
   if(databasefile == -1)
     {
       printf("File could not be opened.\n");
@@ -210,6 +205,6 @@ void read_DB(int n_points)
       printf("%s:\n",fingerprint);
     }
   close(databasefile);
-
+}
 
 @q print_wiring_diagram(n);@>
