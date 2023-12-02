@@ -62,8 +62,9 @@ ctangle NumPSLA.w crossing-number-plus-halving-lines.ch -o count-crossing.c
 cweave NumPSLA.w crossing-number-plus-halving-lines.ch -o NumPSLA-crossing.tex
 ```
 For convenience, the pdf-Version of this file is available as `NumPSLA-crossing.pdf`.
+The results for up to 12 points are in the file `crossing+halving-results-11.txt`.
 
-## Workflow for generating exclude-files for non-realizable AOTs of 9, 10, and 11 points
+# Workflow for generating exclude-files for non-realizable AOTs of 9, 10, and 11 points
 
 0. Obtain the order-type database files. Up to 10 points, they can be downloaded from
    http://www.ist.tugraz.at/aichholzer/research/rp/triangulations/ordertypes/.
