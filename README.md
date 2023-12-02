@@ -24,7 +24,7 @@ This corresponds to AOTs with up to n+1 points.
 If a `fileprefix` is given, statistics about the enumerated AOTs are
 written to the text file fileprefix-*n*.txt, where *n* is the given parameter.
 A python script like `makereport.py` can be used to analyze this output and
-aggregate into interesting tables.
+aggregate it into interesting tables.
 
 The excludefile can be used to enumerate only _realizable_ AOTs with up to
 11 points. For this purpose the three files
