@@ -86,7 +86,7 @@ will read these data and produce some tables of data
 
 # Benchmark
 As a benchmark, we read point sets from the order-type database and compute their convex hull.
-This is done by compiling the program with the change-file `benchmark.ch`:
+The benchmark program is generated with the change-file `benchmark.ch`:
 ```
 ctangle NumPSLA.w benchmark.ch
 ```
