@@ -79,8 +79,9 @@ for n,(x,y) in enumerate(zip(AOT,rAOT)):
 	 
 \fi
 
-\section*{NumPSLA, a program for enumerating pseudoline arrangements and
-abstract order types}
+@*%*%\section*
+{NumPSLA, a program for enumerating pseudoline arrangements and
+abstract order types}.
 
 @q* Introduction.@>
 The purpose of this program is to enumerate
