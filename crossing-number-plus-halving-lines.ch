@@ -61,7 +61,7 @@ not sure where this is supposed to go
 @y
 
 @q* Count halving-lines.@>
-@*1 Extension. Compute crossing-number for each AOT.
+@*1 {Extension: Compute crossing-number for each AOT}.
 
 @q# A076523 (b-file synthesized from sequence entry)@>
 @q1 1 2 3 3 6 4 9 5 13 6 18 7 22 8 27 9 33 10 38 11 44 12 51 13 57@>
@@ -162,7 +162,7 @@ if(p<n-1)
 	CHECK_CROSSING(p+1)@;
 
 }
-
+@/
 /* compute result */
 
 

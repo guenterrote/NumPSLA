@@ -1,6 +1,8 @@
-@*1 Reading from the Order-Type Database.
+@* Reading from the Order-Type Database.
 
-work Only the 16-bit formats.
+For simplicity,
+we work only with numbers in the 16-bit format.
+Inputs in 8-bit formats are converted.
 
 @<Global...@>=
 struct { /* 16-bit unsigned coordinates: */
@@ -9,7 +11,7 @@ struct { /* 8-bit unsigned coordinates: */
 uint8_t x,y; } pointsmall[MAXN+1];
 
 
-@*3 Orientation test for points.
+@*1 Orientation test for points.
 
 The return value of |orientation_test| is positive for counterclockwise orientation
 of the points $i,j,k$.
@@ -36,7 +38,7 @@ typedef int_least64_t large_int; /* for intermediate calculations */
 
 
 
-@*3 Turn point set with coordinates into PSLA.
+@*1 Turn point set with coordinates into PSLA.
 
 We insert the lines one by one into the arrangement.  This is simular
 to the insertion of line $n$ in the recursive enumeration procedure.
@@ -111,7 +113,15 @@ void insert_line(int n)
     }
 }
 
-@*3 Reading.
+@*1 Do the actual reading.
+
+We have to figure out the filenames and the format of the stored numbers.
+We assume that the order types with up to 10 points are stored in the
+current directory in with the original file names
+\texttt{otypes10.b16}, \texttt{otypes09.b16}, \texttt{otypes08.b08},
+etc., and the order types with 11 points are stored in a subdirectory
+\texttt{Ordertypes} with names \texttt{Ordertypes/ord11\_00.b16} \ldots
+\texttt{Ordertypes/ord11\_93.b16}.
 
 @<Include standard libaries@>+=
 #include <fcntl.h>
@@ -121,7 +131,7 @@ void insert_line(int n)
 @<Subr...@>=
 
 void swap_all_bytes(int n)
-{
+{ // convert numbers from little-endian to big-endian format.
   for_int_from_to(i,0,n-1)
     {
       points[i].x = (points[i].x>>8) | (points[i].x<<8);
@@ -161,8 +171,7 @@ int  n_points = n_max+1;
   printf("%Ld point sets were read from the file(s).\n",read_count);
 
 
-@ Read the file.
-Open and read database file and process the input points-
+@ Open and read database file and process the input points.
 @<Subro...@>=
 long long unsigned read_count = 0;@/
 

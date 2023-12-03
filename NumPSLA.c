@@ -20,7 +20,9 @@ printf("%d",a[j]) ; \
 } \
 printf(end) ; \
 } \
- \
+
+#define PRINT_INSTRUCTIONS printf( \
+"Usage: %s n [-exclude excludefile] [splitlevel parts part] [fileprefix]\n",argv[0]) ; \
 
 #define SUCC(i,j) succ[i][j]
 #define PRED(i,j) pred[i][j] \
@@ -31,16 +33,16 @@ PRED(j,k2) = k1; \
 } \
  \
 
-#define getOrientation_explicit(I,i,j,k) ( \
-i<j&&j<k?I[i][j]> I[i][k]: \
-i<k&&k<j?I[i][j]> I[i][k]: \
-j<i&&i<k?I[i][j]<I[i][k]: \
-j<k&&k<i?I[i][j]> I[i][k]: \
-k<j&&j<i?I[i][j]> I[i][k]: \
-k<i&&i<j?I[i][j]<I[i][k]: \
+#define getOrientation_explicit(invP,i,j,k) ( \
+i<j&&j<k?invP[i][j]> invP[i][k]: \
+i<k&&k<j?invP[i][j]> invP[i][k]: \
+j<i&&i<k?invP[i][j]<invP[i][k]: \
+j<k&&k<i?invP[i][j]> invP[i][k]: \
+k<j&&j<i?invP[i][j]> invP[i][k]: \
+k<i&&i<j?invP[i][j]<invP[i][k]: \
 0)  \
 
-#define getOrientation(I,i,j,k) ((i<j) ^(j<k) ^(I[j][i]> I[j][k]) )  \
+#define getOrientation(invP,i,j,k) ((i<j) ^(j<k) ^(invP[j][i]> invP[j][k]) )  \
  \
  \
 
@@ -58,16 +60,17 @@ k<i&&i<j?I[i][j]<I[i][k]: \
 #define entry_small(A,i,j) (A) [i][j] \
  \
 
-#define PRINT_INSTRUCTIONS printf( \
-"Usage: %s n [-exclude excludefile] [splitlevel parts part] [fileprefix]\n",argv[0]) ; \
+#define SUCC_ALTERNATE(i,j) succ[i<<4|j] \
+ \
+ \
 
-/*3:*/
-#line 195 "NumPSLA.w"
+/*2:*/
+#line 198 "NumPSLA.w"
 
 
 
-/*6:*/
-#line 252 "NumPSLA.w"
+/*5:*/
+#line 255 "NumPSLA.w"
 
 #include <stdio.h> 
 #include <stdint.h> 
@@ -76,30 +79,30 @@ k<i&&i<j?I[i][j]<I[i][k]: \
 #include <assert.h> 
 
 
-/*:6*//*66:*/
-#line 116 "readDataBase.w"
+/*:5*//*65:*/
+#line 126 "readDataBase.w"
 
 #include <fcntl.h> 
 #include <unistd.h> 
 
-/*:66*/
-#line 198 "NumPSLA.w"
+/*:65*/
+#line 201 "NumPSLA.w"
 
-/*5:*/
-#line 245 "NumPSLA.w"
+/*4:*/
+#line 248 "NumPSLA.w"
 
 
 typedef enum{false,true}boolean;
 
 
 
-/*:5*//*9:*/
-#line 349 "NumPSLA.w"
+/*:4*//*10:*/
+#line 424 "NumPSLA.w"
 
 typedef int PSLA[MAXN+1][MAXN+1];
 
-/*:9*//*56:*/
-#line 1869 "NumPSLA.w"
+/*:10*//*57:*/
+#line 1975 "NumPSLA.w"
 
 
 
@@ -116,25 +119,35 @@ typedef large_matrix_entry large_matrix[MAXN+1][MAXN+1][MAXN+1];
 
 
 
-/*:56*//*64:*/
-#line 34 "readDataBase.w"
+/*:57*//*63:*/
+#line 36 "readDataBase.w"
 
 typedef int_least64_t large_int;
 
 
 
-/*:64*/
-#line 199 "NumPSLA.w"
+/*:63*/
+#line 202 "NumPSLA.w"
 
-/*10:*/
-#line 390 "NumPSLA.w"
+/*7:*/
+#line 284 "NumPSLA.w"
+
+small_int n_max,split_level;
+unsigned int parts= 1000,part= 0;
+char*fileprefix= "reportPSLA";
+char*exclude_file_name= 0;
+char fname[200]= "";
+FILE*reportfile= 0;
+
+/*:7*//*11:*/
+#line 466 "NumPSLA.w"
 
 int succ[MAXN+1][MAXN+1];
 int pred[MAXN+1][MAXN+1];
 
 
-/*:10*//*16:*/
-#line 560 "NumPSLA.w"
+/*:11*//*17:*/
+#line 653 "NumPSLA.w"
 
 unsigned excluded_code[MAXN+3];
 int excluded_length= 0;
@@ -143,19 +156,19 @@ int matched_length= 0;
 FILE*exclude_file;
 char exclude_file_line[100];
 
-/*:16*//*26:*/
-#line 795 "NumPSLA.w"
+/*:17*//*27:*/
+#line 896 "NumPSLA.w"
 
 unsigned localCountPSLA[MAXN+3];
 
 
-/*:26*//*31:*/
-#line 952 "NumPSLA.w"
+/*:27*//*32:*/
+#line 1054 "NumPSLA.w"
 
 char fingerprint[FINGERPRINT_LENGTH];
 
-/*:31*//*35:*/
-#line 1028 "NumPSLA.w"
+/*:32*//*36:*/
+#line 1130 "NumPSLA.w"
 
 
 
@@ -174,14 +187,14 @@ int P_1_n_forward[MAXN+1];
 int P_1_n_reverse[MAXN+1];
 
 
-/*:35*//*44:*/
-#line 1429 "NumPSLA.w"
+/*:36*//*45:*/
+#line 1531 "NumPSLA.w"
 
 
 long long unsigned cpass,csaved;
 
-/*:44*//*48:*/
-#line 1587 "NumPSLA.w"
+/*:45*//*49:*/
+#line 1689 "NumPSLA.w"
 
 
 long long unsigned countPSLA[MAXN+2],countO[MAXN+2],countU[MAXN+2];
@@ -199,19 +212,8 @@ long long unsigned classcount[MAXN+2][MAXN+2][MAXN+2][3];
 long long unsigned
 numComparisons= 0,numTests= 0;
 
-/*:48*//*61:*/
-#line 2028 "NumPSLA.w"
-
-small_int n_max,split_level;
-unsigned int parts= 1000,part= 0;
-char*fileprefix= "reportPSLA";
-char*exclude_file_name= 0;
-char fname[200]= "";
-FILE*reportfile= 0;
-
-#line 1 "readDataBase.w"
-/*:61*//*62:*/
-#line 5 "readDataBase.w"
+/*:49*//*61:*/
+#line 7 "readDataBase.w"
 
 struct{
 uint16_t x,y;}points[MAXN+1];
@@ -219,11 +221,11 @@ struct{
 uint8_t x,y;}pointsmall[MAXN+1];
 
 
-/*:62*/
-#line 200 "NumPSLA.w"
+/*:61*/
+#line 203 "NumPSLA.w"
 
-/*22:*/
-#line 636 "NumPSLA.w"
+/*23:*/
+#line 731 "NumPSLA.w"
 
 
 void convert_to_PS_array(PSLA*P,int n)
@@ -239,8 +241,8 @@ j= SUCC(i,j);
 j= 0;
 }
 }
-/*:22*//*23:*/
-#line 667 "NumPSLA.w"
+/*:23*//*24:*/
+#line 768 "NumPSLA.w"
 
 
 void convert_to_inverse_PS_array(PSLA*invP,int n)
@@ -258,8 +260,8 @@ j= 0;
 }
 
 
-/*:23*//*25:*/
-#line 756 "NumPSLA.w"
+/*:24*//*26:*/
+#line 857 "NumPSLA.w"
 
 
 small_int upper_hull_PSLA(int n,
@@ -282,8 +284,8 @@ return hullsize;
 
 }
 
-/*:25*//*27:*/
-#line 799 "NumPSLA.w"
+/*:26*//*28:*/
+#line 900 "NumPSLA.w"
 
 
 void print_id(int n)
@@ -293,8 +295,8 @@ for_int_from_to(i,4,n)
 printf(".%d",localCountPSLA[i]);
 }
 
-/*:27*//*29:*/
-#line 817 "NumPSLA.w"
+/*:28*//*30:*/
+#line 918 "NumPSLA.w"
 
 
 
@@ -320,6 +322,7 @@ for_int_from_to(p,0,2*n-1)buffer[p][column]= ' ';
 column++;
 while(true)
 {
+
 
 boolean something_done= false;
 for_int_from_to(p,0,n-2)
@@ -374,8 +377,8 @@ printf("%s\n",buffer[p]);
 assert(n_crossings*2==n*(n-1));
 }
 
-/*:29*//*30:*/
-#line 898 "NumPSLA.w"
+/*:30*//*31:*/
+#line 1000 "NumPSLA.w"
 
 
 void print_pseudolines_short(PSLA*P,int n)
@@ -400,8 +403,8 @@ printf("%c",TO_CHAR((*P)[i][j]));
 }
 }
 
-/*:30*//*32:*/
-#line 956 "NumPSLA.w"
+/*:31*//*33:*/
+#line 1058 "NumPSLA.w"
 
 
 char encode_bits(int acc)
@@ -440,8 +443,8 @@ assert(charpos<FINGERPRINT_LENGTH-1);
 fingerprint[charpos++]= '\0';
 }
 
-/*:32*//*36:*/
-#line 1047 "NumPSLA.w"
+/*:33*//*37:*/
+#line 1149 "NumPSLA.w"
 
 
 void prepare_label_arrays(small_int n,
@@ -466,8 +469,8 @@ i= SUCC(line0,i);
 }
 }
 
-/*:36*//*37:*/
-#line 1076 "NumPSLA.w"
+/*:37*//*38:*/
+#line 1178 "NumPSLA.w"
 
 void compute_lex_smallest_PSLA(PSLA*P,small_int n,
 small_int*hulledges,small_int hullsize)
@@ -510,8 +513,8 @@ int pos= p;
 
 for(c= 0;c<numcandidates_forward;c++)
 {
-/*38:*/
-#line 1142 "NumPSLA.w"
+/*39:*/
+#line 1244 "NumPSLA.w"
 
 int r= candidate[c];
 int i= Sequence[r][pos];
@@ -535,8 +538,8 @@ new_candidates++;
 
 
 
-/*:38*/
-#line 1119 "NumPSLA.w"
+/*:39*/
+#line 1221 "NumPSLA.w"
 
 }
 new_candidates_forward= new_candidates;
@@ -546,8 +549,8 @@ reversed= true;
 pos= n+1-p;
 for(;c<numcandidates;c++)
 {
-/*38:*/
-#line 1142 "NumPSLA.w"
+/*39:*/
+#line 1244 "NumPSLA.w"
 
 int r= candidate[c];
 int i= Sequence[r][pos];
@@ -571,8 +574,8 @@ new_candidates++;
 
 
 
-/*:38*/
-#line 1129 "NumPSLA.w"
+/*:39*/
+#line 1231 "NumPSLA.w"
 
 }
 numcandidates_forward= new_candidates_forward;
@@ -582,8 +585,8 @@ numcandidates= new_candidates;
 }
 }
 }
-/*:37*//*41:*/
-#line 1283 "NumPSLA.w"
+/*:38*//*42:*/
+#line 1385 "NumPSLA.w"
 
 
 boolean screen(small_int n,
@@ -641,8 +644,8 @@ return true;
 }
 
 
-/*:41*//*45:*/
-#line 1434 "NumPSLA.w"
+/*:42*//*46:*/
+#line 1536 "NumPSLA.w"
 
 
 boolean is_lex_smallest_PSLA(small_int n,
@@ -698,8 +701,8 @@ boolean reversed= false;
 int pos= p;
 for(c= 0;c<numcandidates_forward;c++)
 {
-/*46:*/
-#line 1521 "NumPSLA.w"
+/*47:*/
+#line 1623 "NumPSLA.w"
 
 
 #if profile
@@ -733,8 +736,8 @@ new_candidates++;
 
 
 
-/*:46*/
-#line 1491 "NumPSLA.w"
+/*:47*/
+#line 1593 "NumPSLA.w"
 
 }
 numcandidates_forward= new_candidates;
@@ -744,8 +747,8 @@ reversed= true;
 pos= n+1-p;
 for(;c<numcandidates;c++)
 {
-/*46:*/
-#line 1521 "NumPSLA.w"
+/*47:*/
+#line 1623 "NumPSLA.w"
 
 
 #if profile
@@ -779,8 +782,8 @@ new_candidates++;
 
 
 
-/*:46*/
-#line 1501 "NumPSLA.w"
+/*:47*/
+#line 1603 "NumPSLA.w"
 
 }
 numcandidates= new_candidates;
@@ -793,8 +796,8 @@ return true;
 }
 }
 }
-/*47:*/
-#line 1555 "NumPSLA.w"
+/*48:*/
+#line 1657 "NumPSLA.w"
 
 {
 if(numcandidates_forward> 0)
@@ -811,15 +814,15 @@ int symmetric_shift= candidate[numcandidates_forward];
 
 
 
-/*:47*/
-#line 1513 "NumPSLA.w"
+/*:48*/
+#line 1615 "NumPSLA.w"
 
 
 return true;
 }
 
-/*:45*//*57:*/
-#line 1889 "NumPSLA.w"
+/*:46*//*58:*/
+#line 1995 "NumPSLA.w"
 
 
 void copy_small(small_matrix*A,small_matrix*B,small_int n)
@@ -854,8 +857,8 @@ entry_small(Temp,j,i)--;
 }
 
 
-/*:57*//*59:*/
-#line 1928 "NumPSLA.w"
+/*:58*//*60:*/
+#line 2034 "NumPSLA.w"
 
 
 
@@ -888,12 +891,9 @@ j= SUCC(i,j);
 }
 
 
-
-
-
-
-/*:59*//*63:*/
-#line 17 "readDataBase.w"
+#line 1 "readDataBase.w"
+/*:60*//*62:*/
+#line 19 "readDataBase.w"
 
 large_int orientation_test(int i,int j,int k)
 {
@@ -903,8 +903,8 @@ large_int c= points[k].x-(large_int)points[i].x;
 large_int d= points[k].y-(large_int)points[i].y;
 return a*d-b*c;
 }
-/*:63*//*65:*/
-#line 52 "readDataBase.w"
+/*:62*//*64:*/
+#line 54 "readDataBase.w"
 
 void insert_line(int n);
 
@@ -967,8 +967,8 @@ jplus= k_right;
 }
 }
 
-/*:65*//*67:*/
-#line 121 "readDataBase.w"
+/*:64*//*66:*/
+#line 131 "readDataBase.w"
 
 
 void swap_all_bytes(int n)
@@ -981,8 +981,8 @@ points[i].y= (points[i].y>>8)|(points[i].y<<8);
 }
 }
 
-/*:67*//*69:*/
-#line 166 "readDataBase.w"
+/*:66*//*68:*/
+#line 175 "readDataBase.w"
 
 long long unsigned read_count= 0;
 
@@ -1028,13 +1028,14 @@ close(databasefile);
 }
 
 
-#line 2037 "NumPSLA.w"
+#line 2067 "NumPSLA.w"
 
-/*:69*/
-#line 201 "NumPSLA.w"
 
-/*12:*/
-#line 414 "NumPSLA.w"
+/*:68*/
+#line 204 "NumPSLA.w"
+
+/*13:*/
+#line 490 "NumPSLA.w"
 
 
 void recursive_generate_PSLA_start(int n);
@@ -1062,18 +1063,18 @@ if(jplus==0){
 if(j==n-1)
 {
 LINK(n,entering_edge,0);
-/*15:*/
-#line 543 "NumPSLA.w"
+/*16:*/
+#line 619 "NumPSLA.w"
 
 countPSLA[n]++;
 localCountPSLA[n]++;
 
 
-/*:15*/
-#line 441 "NumPSLA.w"
+/*:16*/
+#line 517 "NumPSLA.w"
 
-/*14:*/
-#line 531 "NumPSLA.w"
+/*15:*/
+#line 607 "NumPSLA.w"
 
 if(n==n_max&&countPSLA[n]%50000000000==0){
 
@@ -1085,11 +1086,11 @@ print_pseudolines_short(&P,n);
 fflush(stdout);
 }
 
-/*:14*/
-#line 442 "NumPSLA.w"
+/*:15*/
+#line 518 "NumPSLA.w"
 ;
-/*20:*/
-#line 616 "NumPSLA.w"
+/*18:*/
+#line 662 "NumPSLA.w"
 
 boolean is_excluded= false;
 if(n==matched_length+1&&
@@ -1099,8 +1100,8 @@ matched_length= n;
 if(matched_length==excluded_length){
 
 is_excluded= true;
-/*18:*/
-#line 577 "NumPSLA.w"
+/*20:*/
+#line 686 "NumPSLA.w"
 
 do{
 if(fscanf(exclude_file,"%s\n",exclude_file_line)!=EOF)
@@ -1126,11 +1127,11 @@ fclose(exclude_file);
 }
 }while(excluded_length> n_max);
 
-/*:18*/
-#line 625 "NumPSLA.w"
+/*:20*/
+#line 671 "NumPSLA.w"
 
-/*19:*/
-#line 605 "NumPSLA.w"
+/*21:*/
+#line 714 "NumPSLA.w"
 
 matched_length= 2;
 while(excluded_code[matched_length+1]==
@@ -1140,18 +1141,21 @@ matched_length<n)
 
 matched_length++;
 
-/*:19*/
-#line 626 "NumPSLA.w"
+
+
+/*:21*/
+#line 672 "NumPSLA.w"
 
 }
 }
 
-/*:20*/
-#line 443 "NumPSLA.w"
+
+/*:18*/
+#line 519 "NumPSLA.w"
 
 if(is_excluded)return;
-/*50:*/
-#line 1628 "NumPSLA.w"
+/*51:*/
+#line 1730 "NumPSLA.w"
 
 
 
@@ -1200,18 +1204,18 @@ printf("found n=%d. %Ld ",n_points,countO[n_points]);
 print_small(S,n_points);
 #endif
 
-/*:50*/
-#line 445 "NumPSLA.w"
+/*:51*/
+#line 521 "NumPSLA.w"
 
-/*52:*/
-#line 1743 "NumPSLA.w"
+/*53:*/
+#line 1849 "NumPSLA.w"
 
 
 #if generatelist 
 
 if(n==n_max&&lex_smallest){
-/*33:*/
-#line 995 "NumPSLA.w"
+/*34:*/
+#line 1097 "NumPSLA.w"
 
 {
 PSLA P;
@@ -1224,19 +1228,19 @@ printf("%s:",fingerprint);
 
 
 
-/*:33*/
-#line 1748 "NumPSLA.w"
+/*:34*/
+#line 1854 "NumPSLA.w"
 
 print_id(n);printf("\n");}
 #endif
 
 #if 0
 if(n==n_max&&countPSLA[n]==50){
-PSLA P1,invP1;
-convert_to_PS_array(&P1,n);
-convert_to_inverse_PS_array(&invP1,n);
-print_pseudolines_short(&P1,n);
-printf("inverse ");print_pseudolines_short(&invP1,n+1);
+PSLA PP,invPP;
+convert_to_PS_array(&PP,n);
+convert_to_inverse_PS_array(&invPP,n);
+print_pseudolines_short(&PP,n);
+printf("inverse ");print_pseudolines_short(&invPP,n+1);
 print_wiring_diagram(n);
 }
 #endif
@@ -1291,15 +1295,15 @@ printf("\n");
 
 
 #if 0
-PSLA inverse_P;
-convert_to_inverse_PS_array(&inverse_P,n);
+PSLA invP;
+convert_to_inverse_PS_array(&invP,n);
 
 small_matrix S;
 convert_to_small_lambda_matrix(&S,n_points);
 large_matrix L;
 convert_small_to_large(&S,&L,n_points);
-/*53:*/
-#line 1824 "NumPSLA.w"
+/*54:*/
+#line 1930 "NumPSLA.w"
 
 
 {int n= n_points;
@@ -1308,31 +1312,31 @@ for_int_from_to(j,0,n-1)
 if(i!=j)
 for_int_from_to(k,0,n-1)
 if(k!=j&&k!=i)
-if(getOrientation(inverse_P,i,j,k)!=L[i][j][k]){
+if(getOrientation(invP,i,j,k)!=L[i][j][k]){
 
 printf("[%d,%d,%d]=%d!=%d\n",i,j,k,
-getOrientation(inverse_P,i,j,k),L[i][j][k]);
+getOrientation(invP,i,j,k),L[i][j][k]);
 exit(1);
 }
 ;
 
 }
 
-/*:53*/
-#line 1820 "NumPSLA.w"
+/*:54*/
+#line 1926 "NumPSLA.w"
 
 #endif
 
-/*:52*/
-#line 446 "NumPSLA.w"
+/*:53*/
+#line 522 "NumPSLA.w"
 
 if(n<n_max)
 if(n!=split_level||countPSLA[n]%parts==part){
 #if enumAOT 
 boolean hopeful= true;
 if(n==n_max-1){
-/*43:*/
-#line 1411 "NumPSLA.w"
+/*44:*/
+#line 1513 "NumPSLA.w"
 
 int P_1_n= PRED(1,0);
 
@@ -1350,8 +1354,8 @@ if(a+1<P_1_n)hopeful= false;
 }
 if(hopeful)cpass++;else csaved++;
 
-/*:43*/
-#line 452 "NumPSLA.w"
+/*:44*/
+#line 528 "NumPSLA.w"
 
 }
 if(hopeful)
@@ -1414,14 +1418,14 @@ recursive_generate_PSLA(0,0,n);
 LINK(0,n-1,1);
 }
 
-/*:12*/
-#line 202 "NumPSLA.w"
+/*:13*/
+#line 205 "NumPSLA.w"
 
 int main(int argc,char*argv[])
 {
 
-/*60:*/
-#line 1968 "NumPSLA.w"
+/*8:*/
+#line 293 "NumPSLA.w"
 
 
 if(argc<2)
@@ -1450,12 +1454,12 @@ if(argc>=4)
 exclude_file_name= argv[3];
 argshift= 2;
 printf("Excluding entries from file %s.\n",exclude_file_name);
-/*17:*/
-#line 569 "NumPSLA.w"
+/*19:*/
+#line 678 "NumPSLA.w"
 
 exclude_file= fopen(exclude_file_name,"r");
-/*18:*/
-#line 577 "NumPSLA.w"
+/*20:*/
+#line 686 "NumPSLA.w"
 
 do{
 if(fscanf(exclude_file,"%s\n",exclude_file_line)!=EOF)
@@ -1481,14 +1485,14 @@ fclose(exclude_file);
 }
 }while(excluded_length> n_max);
 
-/*:18*/
-#line 571 "NumPSLA.w"
+/*:20*/
+#line 680 "NumPSLA.w"
 
 matched_length= 2;
 
 
-/*:17*/
-#line 1996 "NumPSLA.w"
+/*:19*/
+#line 321 "NumPSLA.w"
 
 }
 else{
@@ -1521,13 +1525,13 @@ fflush(stdout);
 }
 
 
-/*:60*/
-#line 206 "NumPSLA.w"
+/*:8*/
+#line 209 "NumPSLA.w"
 ;
 #if readdatabase 
 
-/*68:*/
-#line 134 "readDataBase.w"
+/*67:*/
+#line 144 "readDataBase.w"
 
 int n_points= n_max+1;
 int bits= n_points>=9?16:8;
@@ -1558,14 +1562,14 @@ read_database_file(inputfile,bits,record_size,n_points,is_big_endian);
 printf("%Ld point sets were read from the file(s).\n",read_count);
 
 
-/*:68*/
-#line 209 "NumPSLA.w"
+/*:67*/
+#line 212 "NumPSLA.w"
 
 return 0;
 #endif
 #if enumAOT
-/*49:*/
-#line 1613 "NumPSLA.w"
+/*50:*/
+#line 1715 "NumPSLA.w"
 
 
 countPSLA[1]= 
@@ -1581,11 +1585,11 @@ reportfile= fopen(fname,"w");
 }
 
 
-/*:49*/
-#line 213 "NumPSLA.w"
+/*:50*/
+#line 216 "NumPSLA.w"
 ;
-/*13:*/
-#line 516 "NumPSLA.w"
+/*14:*/
+#line 592 "NumPSLA.w"
 
 
 LINK(1,0,2);
@@ -1600,27 +1604,31 @@ recursive_generate_PSLA_start(3);
 
 
 
-/*:13*/
-#line 214 "NumPSLA.w"
+/*:14*/
+#line 217 "NumPSLA.w"
 ;
-/*51:*/
-#line 1682 "NumPSLA.w"
+/*52:*/
+#line 1784 "NumPSLA.w"
 
-printf("%20s%83s\n","#PSLA visited","#PSLA computed from AOT");
-for_int_from_to(i,3,n_max+1){
-long long symmetric= 2*countU[i]-countO[i];
-printf("n=%2d, #PSLA=%11Ld",i,countPSLA[i]);
+printf("%34s%69s\n","#PSLA visited by the program","#PSLA computed from AOT");
+for_int_from_to(n,3,n_max+1){
+long long symmetric= 2*countU[n]-countO[n];
+printf("n=%2d",n);
+if(split_level!=0&&n> split_level)printf("*,");
+else printf(", ");
+printf("#PSLA=%11Ld",countPSLA[n]);
 #if 1
 printf(", #AOT=%10Ld, #OAOT=%10Ld, #symm. AOT=%7Ld, ",
-countU[i],
-countO[i],symmetric
+countU[n],
+countO[n],symmetric
 );
-printf("#PSLA=%11Ld, #xPSLA=%10Ld",PSLAcount[i],xPSLAcount[i]);
+printf("#PSLA=%11Ld, #xPSLA=%10Ld",PSLAcount[n],xPSLAcount[n]);
 #endif
 printf("\n");
 
 }
 
+if(split_level!=0)printf("* Lines with \"*\" give results from partial enumeration.\n");
 #if profile
 printf("Total tests is_lex_min (after screening) = %Ld, total comparisons = %Ld, average =%6.3f\n",
 numTests,numComparisons,numComparisons/(double)numTests);
@@ -1658,11 +1666,11 @@ printf("Results have been written to file %s.\n",fname);
 }
 
 
-/*:51*/
-#line 215 "NumPSLA.w"
+/*:52*/
+#line 218 "NumPSLA.w"
 ;
 #endif
 return 0;
 }
 
-/*:3*/
+/*:2*/

@@ -3,12 +3,15 @@
 \usepackage[a4paper,margin=2cm]{geometry}
 \usepackage{hyperref}
 \usepackage{graphicx}
+\pagestyle{myheadings}
+\renewcommand{\sectionmark}[1]{ \markboth{}{#1} }
 \usepackage{amsmath}
 \hypersetup{colorlinks=true,linkcolor=blue,citecolor=darkgreen,
   filecolor=BrickRed,urlcolor=blue}
   
 \let\CwebAssign=\gets     % assignment \let\K=\gets
-\def\CwebRankNoEject{2}
+\def\CwebRankNoEject{1}
+%\secpagedepth=-2
 
 \begin{document}
 \let\K=\gets
@@ -40,7 +43,7 @@
 \newcommand{\jplusold}{j^+_{\mathrm{old}}}
 \newcommand{\kxright}{k_{\mathrm{right}}}
 \newcommand{\kxleft}{k_{\mathrm{left}}}
-
+\newcommand{\invP}{\bar P}
 
 \noindent{\small\today\ at \hours}
 
@@ -76,35 +79,30 @@ for n,(x,y) in enumerate(zip(AOT,rAOT)):
 	 
 \fi
 
- The \texttt{-exclude} option.
-%Streamline the \texttt{screening} program.
+\section*{NumPSLA, a program for enumerating pseudoline arrangements and
+abstract order types}
 
-Using inverse-PSLA makes
-\texttt{screening} SLOWER!
-Only good if combined with screening one level before!
-Computing inverse-PSLA one level before max-n costs almost nothing.
-(Whatever that means!)
-
-@*Introduction. The purpose of this program is to enumerate
+@q* Introduction.@>
+The purpose of this program is to enumerate
 ORIENTED
 abstract order types.
 (sometimes also called
 generalized configuration or a pseudoconfiguration)
 
-Programm enumerates the objects without
-repetition and without much storage.
+The program enumerates the objects without
+repetition and with negligible storage.
 
 We consider nondegenerate cases only: no three points on a line.
 
-We abbreviate {\it oriented
-abstract order type\/} by OAOT.
+We abbreviate \emph{oriented
+abstract order type} by OAOT.
 %For each OAOT for $n$ points has a unique parent with $n-1$ points.
 %This defines a tree structure on the OAOTs.
 %The principle of the enumeration is a depth-first traversal of this tree.
 
 (For statistics, can still report only one orientation of two mirror types)
 
-@*1 Pseudoline Arrangements and Abstract Order Types.
+@*1 Pseudoline arrangements and abstract order types.
 
 We consider everything \emph{oriented}, i.e., the mirror object can be
 isomorphic or not. Also, only \emph{simple}: No three curves through a point.
@@ -140,7 +138,12 @@ A \emph{marked} OAOT is an OAOT with a marked point on the convex hull.
   \label{fig:PSLA}
 \end{figure}
 
-See Aichholzer and Krasser, Table 1.
+See Aichholzer and Krasser,
+%Oswin Aichholzer and Hannes Krasser.
+Abstract order type extension and new results on the
+rectilinear crossing number. Comput. Geom. 36 (2007), 2--15,
+%Special Issue on the 21st European Workshop on Computational Geometry. 
+Table 1.
 
 \halign{\strut\hfil$#$ &\ \hfil$#$ &\ \hfil$#$ &\ \hfil$#$ &\quad$#$\hfil
   &\ \hfil$#$&\ \ \hfil$#$\cr
@@ -150,7 +153,7 @@ See Aichholzer and Krasser, Table 1.
  \cr 
 n & \hbox{\#AOT} & \hbox{\#realizable AOT} &\Delta&$relative $\Delta
  & \hbox{ \ \#mirror-symmetric AOT}
-  & \hbox{\#O$x$-monotonePSLA}
+  & \hbox{\#$x$-monotonePSLA}
 \cr
 \noalign{\hrule}
 3 & 1 & 1 & 0 & 0 & 1 & 2 \cr
@@ -184,10 +187,10 @@ $$
 %Indeed it is the number of
 simple {projective} pseudoline arrangements with a marked cell.
 
-According to OEIS, three different sequences give the number of
-primitive sorting networks on $n$ elements: A006245, A006246, A006248.
+According to OEIS, three different sequences give ``the number of
+primitive sorting networks on $n$ elements'': A006245, A006246, A006248.
 
-@*1 The main program.
+@* The main program.
 
 @d MAXN 15 /* The maximum number of pseudolines for which the program will work. */
 
@@ -219,7 +222,7 @@ int main (int argc,char* argv[])
 
 @*1 Preprocessor switches.
 
-The program has the enumeration procesure at its core, but it can be
+The program has the enumeration procedure at its core, but it can be
 configured to
 perfom different tasks, by setting  preprocessor switches at
 compile-time.
@@ -274,8 +277,80 @@ typedef enum {@+@!false,@+@!true @+ } boolean;
     printf(end);
     } /* for \texttt{gcc}, compile with \texttt{-Wno-format-zero-length} to suppress warnings */
 
+@*1 Command-line arguments.
+@d PRINT_INSTRUCTIONS     printf(
+"Usage: %s n [-exclude excludefile] [splitlevel parts part] [fileprefix]\n", argv[0]);
 
-@*1 Representations of Pseudoline arrangements.
+ @<Global ...@>=
+small_int n_max,split_level;
+unsigned int parts=1000,part=0;
+char* fileprefix = "reportPSLA"; // default name
+char* exclude_file_name = 0;
+char fname[200] = "";
+FILE *reportfile = 0;
+
+@
+@<Parse...@>=
+
+if (argc<2)
+n_max = 7;
+else {
+  if (argv[1][0]=='-') { /* first argument ``\texttt{--help}'' gives
+    help message. */
+    PRINT_INSTRUCTIONS;
+    exit(0);
+}
+ n_max = atoi(argv[1]);
+}
+printf("Enumeration up to n = %d pseudolines, %d points.\n", n_max, n_max+1);
+if (n_max>MAXN)
+{ 
+printf("The largest allowed value is %d. Aborting.\n", MAXN);
+exit(1);
+}
+
+int argshift = 0;
+if (argc>=3)
+{
+  if(strcmp(argv[2],"-exclude")==0) {
+    if (argc>=4)
+    {
+      exclude_file_name = argv[3];
+      argshift = 2;
+      printf("Excluding entries from file %s.\n", exclude_file_name);
+      @<Open the exclude-file and read first line@>
+    }
+    else {
+      PRINT_INSTRUCTIONS;
+      exit(1);
+    }
+  }
+}
+if (argc>=3+argshift) {
+ 
+  split_level = atoi(argv[2+argshift]);
+  if (split_level==0)
+  { if (argv[2+argshift][0]!='-') fileprefix = argv[2+argshift];
+snprintf(fname, sizeof(fname)-1, "%s-%d.txt", fileprefix,n_max);
+parts = 1;
+ }
+else
+{   
+  if (argc>=4+argshift) parts = atoi(argv[3+argshift]);
+  if (argc>=5+argshift) part = atoi(argv[4+argshift]);
+  part = part % parts;
+  if (argc>=6+argshift) fileprefix = argv[5+argshift];
+  snprintf(fname, sizeof(fname)-1, "%s-%d-S%d-part_%d_of_%d.txt", fileprefix,n_max,
+  split_level, part,parts);
+  printf("Partial enumeration: split at level n = %d. Part %d of %d.\n",
+  split_level, part,parts);
+}
+  printf("Results will be reported to file %s.\n", fname);
+  fflush(stdout);
+}
+
+
+@* Representations of pseudoline arrangements.
 
 Here is an $x$-monotone
 pseudoline arrangement with $n=5$ pseudolines,
@@ -314,7 +389,7 @@ intersects all other pseudolines from top to bottom at the very left
 and again intersects all pseudolines from bottom to top at the very
 right.
 
-@*3 The local sequences matrix and its inverse.
+@*1 The local sequences matrix and its inverse.
 Here is a representation as a two-dimensional array, indicating for
 each pseudoline $i$ the sequence $P_i$ of crossings with the other
 lines.
@@ -349,7 +424,7 @@ therefore we define the rows to have maximum length |MAXN+1|.
 @<Types...@>=
 typedef int PSLA[MAXN+1][MAXN+1];
 
-@*2 Linked representation.
+@*1 Linked representation.
 
 For modifying and extending PSLAs, it is best to work with a linked
 representation.
@@ -369,7 +444,8 @@ Thus, |SUCC(0,i)=i+1| and |SUCC(0,n)@t${}=1$@>|.
 
 The program works with a single linked-list representation, which is
 stored in the global arrays 
-|succ| and |pred|.
+|succ| and |pred|. A single pair of these arrays is sufficient for the
+whole program.
 
 @d SUCC(i,j) succ[i][j] // access macros
 @d PRED(i,j) pred[i][j]
@@ -392,7 +468,7 @@ int succ[MAXN+1][MAXN+1];
 int pred[MAXN+1][MAXN+1];
 
 
-@*1 Recursive Enumeration.
+@* Recursive Enumeration.
 
 We extend an $x$-monotone pseudoline arrangement
  of $n-1$ lines $1,\dts, n-1$, 
@@ -545,7 +621,7 @@ printf("..%Ld.. ", countPSLA[n]);
     localCountPSLA[n]++; // update local counter
 @qif(n==n_max)  printf("%d\n",PRED(1,0));@>
 
-@*1 Handling the exclude-file.
+@* Handling the exclude-file.
 
 The array |excluded_code[3@t\ldots@>excluded_length]| contains the decimal code
 of the next PSLA that should be excluded from the enumeration.
@@ -557,6 +633,23 @@ It is assumed that the codes in the exclude-file are sorted in
 strictly increasing lexicographic order, and no code is a prefix of
 another code.
 
+To give an example,
+here are a few lines from the middle of the file \texttt{exclude10.txt}:
+\begin{verbatim}
+1.3.7.12.9.17.45
+1.3.7.12.9.18.35
+1.3.7.12.9.18.37
+1.3.7.12.9.19
+1.3.7.12.9.20
+1.3.7.12.9.21.36
+1.3.7.12.9.21.37
+\end{verbatim}
+
+NOTE: As currently implemented, the handling of the
+exclude-file does not work together with
+the parallelization through the
+\emph{splitlevel} option. This is not checked.
+
  @<Global variables@>+=
  unsigned excluded_code[MAXN+3];
  int excluded_length = 0;
@@ -564,6 +657,22 @@ another code.
  any match. */
  FILE *exclude_file;
 char exclude_file_line[100];
+
+@
+@<Check for exclusion and set the flag |is_excluded| @>=
+boolean is_excluded = false;
+if (n==matched_length+1 &&
+localCountPSLA[n]==excluded_code[n])
+{
+  matched_length = n; // one more matching entry was found.
+  if (matched_length == excluded_length) {
+    // skip this PSLA and the whole subtree
+    is_excluded = true;
+    @<Get the next excluded decimal code...@>@;
+    @<Determine the matched length |matched_length|@>
+}
+}
+
 
 @
 @<Open the exclude-file and read first line@>=
@@ -611,23 +720,9 @@ if (fscanf(exclude_file, "%s\n", exclude_file_line)!=EOF)
 @q      {print_id(n);  printf(" ++%Ld\n",countPSLA[n]); @>
       matched_length ++;
 @q        printf(" ++%d\n",matched_length); } @>
-@
 
-@<Check for exclusion and set the flag |is_excluded| @>=
-boolean is_excluded = false;
-if (n==matched_length+1 &&
-localCountPSLA[n]==excluded_code[n])
-{
-  matched_length = n;
-  if (matched_length == excluded_length) {
-    // skip this PSLA and the whole subtree
-    is_excluded = true;
-    @<Get the next excluded decimal code...@>@;
-    @<Determine the matched length |matched_length|@>
-}
-}
     
-@*1 Conversion between different representations.
+@* Conversion between different representations.
 @
 Convert from linked list to array.
 
@@ -648,8 +743,11 @@ void convert_to_PS_array(PSLA *P, int n)
     j = 0; // j starts at 0 except for the very first line.
   }
 }
-@ The inverse PSLA matrix $\bar P=I=$|invP| gives the following information:
-$I_{jk}=p$ if
+@
+
+The inverse PSLA matrix %$\bar P=I=$
+|invP| gives the following information:
+$\bar P_{jk}=p$ if
 the intersection between line $j$ and line $k$ is
 the $p$-th intersection on line $j$ ($p=0,\dts,n-1$).
 This is used to answer orientation queries about the pseudoline
@@ -664,6 +762,9 @@ void compute_inverse_PSLA(PSLA *P,PSLA *invP,int n)
     (*invP)[i][(*P)[i][p]] = p;
 }
 \fi
+
+@s invP TeX
+
 @<Subr...@>=
 
 void convert_to_inverse_PS_array(PSLA *invP, int n)
@@ -681,11 +782,11 @@ void convert_to_inverse_PS_array(PSLA *invP, int n)
 }
 
 
-@*1 The Orientation Predicate.
+@* The orientation predicate.
 \label{sec:orientation}
 
 %Instead of storing $O(n^3)$ values, we formulate a macro that
-We compute the orientation predicate in constant time from the inverse permutation array $I$.
+We compute the orientation predicate in constant time from the inverse permutation array |invP|.
 It is a |boolean| predicate that returns |true| if the points $i,j,k$
 are in counterclockwise order. It works only when the three indices are distinct.
 
@@ -712,16 +813,16 @@ all 3! possibilities in which the indices $i,j,k$ can be ordered.
 \end{figure}
 
 
-@d getOrientation_explicit(I, i, j, k) (
-i<j && j<k ? I[i][j]>I[i][k] : 
-i<k && k<j ? I[i][j]>I[i][k] : 
-j<i && i<k ? I[i][j]<I[i][k] : @|@t\hskip -2em\phantom(@>
-j<k && k<i ? I[i][j]>I[i][k] : 
-k<j && j<i ? I[i][j]>I[i][k] : 
-k<i && i<j ? I[i][j]<I[i][k] : 
+@d getOrientation_explicit(invP, i, j, k) (
+i<j && j<k ? invP[i][j]>invP[i][k] : 
+i<k && k<j ? invP[i][j]>invP[i][k] : 
+j<i && i<k ? invP[i][j]<invP[i][k] : @|@t\hskip -2em\phantom(@>
+j<k && k<i ? invP[i][j]>invP[i][k] : 
+k<j && j<i ? invP[i][j]>invP[i][k] : 
+k<i && i<j ? invP[i][j]<invP[i][k] : 
 0)
 
-@d getOrientation(I, i, j, k) ((i<j) ^ (j<k) ^ (I[j][i]>I[j][k]))
+@d getOrientation(invP, i, j, k) ((i<j) ^ (j<k) ^ (invP[j][i]>invP[j][k]))
 
 
 
@@ -775,7 +876,7 @@ small_int upper_hull_PSLA(int n,
 
 }
 
-@*1 Unique identifiers, accession numbers, Dewey decimal notation.
+@* Unique identifiers, accession numbers, Dewey decimal notation.
 
 The recursive enumeration algorithm imposes an  implicit tree structure on PSLAs: the
 parents of a PSLA with $n$ lines is the unique PSLA on $n-1$ lines from
@@ -805,7 +906,7 @@ void print_id(int n)
      printf(".%d",localCountPSLA[i]);
 }
 
-@*1Output.
+@* Output.
 
 @ Prettyprinting of a wiring diagram. Fill a buffer of lines
 columnwise from left to right.
@@ -839,7 +940,8 @@ void print_wiring_diagram(int n)
    @+   column++;//empty column
   while(true)
     {
-    // find where crossings occur, set array |crossing|$[0\dts n-2]$
+    /* find where crossings occur, set boolean array |crossing|$[0\dts
+    n-2]$ accordingly. */
     boolean something_done = false;
     for_int_from_to(p, 0,n-2)
       {
@@ -893,7 +995,7 @@ void print_wiring_diagram(int n)
   assert(n_crossings*2 == n*(n-1));
 }
 
-@*2 Fingerprints.
+@*1 Fingerprints.
 
 @<Subr...@>=
 
@@ -919,7 +1021,7 @@ void print_pseudolines_compact(PSLA *P,int n)
   }
 }
 
-@*3 A more compact fingerprint.
+@*2 A more compact fingerprint.
 
 Sufficient to know
 
@@ -1004,9 +1106,9 @@ compute_fingerprint(&P,n);
 
 
 
-@*1Abstract order types.
+@* Abstract order types.
 
-@*2 Lexmin for PSLA Representation.
+@*1 Lexmin for PSLA representation.
 
 In order to generate every AOT only once, we check whether the
 representation is smallest among all PSLAs that produce
@@ -1068,7 +1170,7 @@ small_int *hulledges, small_int hullsize)
     }
 }
 
-@*2 Compute the lex-smallest representation.
+@*1 Compute the lex-smallest representation.
 
 The input is taken from the global |succ| and |pred| arrays.
 The function assumes that |hulledges| and |hullsize| have been computed.l)
@@ -1568,7 +1670,7 @@ The last entry $q=n-1$ can be omitted, because every row is a permutation. */
 
 
 
-@*1 Statistics.
+@* Statistics.
 Characteristics:
 \begin{itemize}
 \item number $h$ of hull points.
@@ -1680,21 +1782,25 @@ can conveniently read and process it.
 
 
 @<Report statistics...@>=
-  printf("%20s%83s\n","#PSLA visited", "#PSLA computed from AOT");
-for_int_from_to(i,3,n_max+1) {
-  long long symmetric =  2*countU[i] - countO[i];
-  printf("n=%2d, #PSLA=%11Ld", i, countPSLA[i]);
+  printf("%34s%69s\n","#PSLA visited by the program", "#PSLA computed from AOT");
+for_int_from_to(n,3,n_max+1) {
+  long long symmetric =  2*countU[n] - countO[n];
+  printf("n=%2d", n);
+  if (split_level!=0 && n>split_level)  printf("*,"); @+
+  else  printf(", ");
+  printf("#PSLA=%11Ld", countPSLA[n]);
 #if 1
   printf(", #AOT=%10Ld, #OAOT=%10Ld, #symm. AOT=%7Ld, ",
-  countU[i], 
-countO[i], symmetric
+  countU[n], 
+countO[n], symmetric
   );
-  printf("#PSLA=%11Ld, #xPSLA=%10Ld", PSLAcount[i], xPSLAcount[i]);
+  printf("#PSLA=%11Ld, #xPSLA=%10Ld", PSLAcount[n], xPSLAcount[n]);
 #endif
   printf("\n");
 
 }
 
+if (split_level!=0) printf("* Lines with \"*\" give results from partial enumeration.\n");
 #if profile
 printf("Total tests is_lex_min (after screening) = %Ld, total comparisons = %Ld, average =%6.3f\n",
 numTests, numComparisons, numComparisons/(double)numTests);
@@ -1734,7 +1840,7 @@ fclose(reportfile);
 
 @ Problem-specific processing can be added here.
 
-After computing the inverse PSLA matrix, one can perform tests on the
+After computing the inverse PSLA matrix, one can perform a few tests on the
 order type, using orientation queries.
 
 The following test program compares the orientation queries against an
@@ -1751,11 +1857,11 @@ print_id(n);printf("\n"); }
 @qprint_id(n); printf(" .. %d",matched_length); printf(" --%Ld\n",countPSLA[n]);@>
 #if 0
 if(n==n_max && countPSLA[n]==50) { // print ``some'' example
-  PSLA P1,invP1;
-  convert_to_PS_array(&P1,n);
-  convert_to_inverse_PS_array(&invP1,n);
-  print_pseudolines_short(&P1,n);
-  printf("inverse ");  print_pseudolines_short(&invP1,n+1);
+  PSLA PP,invPP;
+  convert_to_PS_array(&PP,n);
+  convert_to_inverse_PS_array(&invPP,n);
+  print_pseudolines_short(&PP,n);
+  printf("inverse ");  print_pseudolines_short(&invPP,n+1);
   print_wiring_diagram(n);
   }
 #endif
@@ -1810,8 +1916,8 @@ if(n==2*MID-2)
 
 
 #if 0
-PSLA inverse_P; // the orientation test is computed from this array.
-convert_to_inverse_PS_array(&inverse_P,n);
+PSLA invP; // the orientation test is computed from this array.
+convert_to_inverse_PS_array(&invP,n);
 @#
 small_matrix S;
 convert_to_small_lambda_matrix(&S, n_points);
@@ -1829,19 +1935,19 @@ convert_small_to_large(&S, &L, n_points);
   if (i!=j)
   for_int_from_to(k,0,n-1)
   if (k!=j && k!=i)
-  if(getOrientation(inverse_P,i,j,k) != L[i][j][k]) {
+  if(getOrientation(invP,i,j,k) != L[i][j][k]) {
     @qprint_small(S, n_points);@>
   printf ("[%d,%d,%d]=%d!=%d\n", i,j,k,
-  getOrientation(inverse_P,i,j,k), L[i][j][k]);
+  getOrientation(invP,i,j,k), L[i][j][k]);
   exit(1);
   }
   ;
 
 }  
 
-@*1 Data Structures for Abstract Order Types.
+@* Data structures for abstract order types.
 
-@ Small $\Lambda$-matrices.
+@  $\lambda$-matrices.
 
 In this program, entries $\Lambda_{ijk}$ of the large matrix are only
 ever accessed for $i<j<k$.
@@ -1882,7 +1988,7 @@ typedef large_matrix_entry large_matrix[MAXN+1][MAXN+1][MAXN+1];
 
 
 
-@ Generating the large $\Lambda$-matrix. Only for testing purposes.
+@ Generating the $\Lambda$-matrix. Only for testing purposes.
 Assumes natural ordering. Assumes general position. Works by plucking
 points from the convex hull one by one.
 
@@ -1920,7 +2026,7 @@ small_int n)
 }
 
 
-@*1 Auxiliary routines and conversion to other formats.
+@* Auxiliary routines and conversion to other formats.
 
 @ Input: PSLA with $n$ lines $1\dts n$ plus line $0$ ``at $\infty$''.
 Output: small $\lambda$-matrix $B$ for AOT on $n+1$ points.
@@ -1957,86 +2063,36 @@ void convert_to_small_lambda_matrix(small_matrix *B, int n)
 }
 
 
-
-
-
-
-@*1 Command-line arguments.
-@d PRINT_INSTRUCTIONS     printf(
-"Usage: %s n [-exclude excludefile] [splitlevel parts part] [fileprefix]\n", argv[0]);
-
-@<Parse...@>=
-
-if (argc<2)
-n_max = 7;
-else {
-  if (argv[1][0]=='-') { /* first argument ``\texttt{--help}'' gives
-    help message. */
-    PRINT_INSTRUCTIONS;
-    exit(0);
-}
- n_max = atoi(argv[1]);
-}
-printf("Enumeration up to n = %d pseudolines, %d points.\n", n_max, n_max+1);
-if (n_max>MAXN)
-{ 
-printf("The largest allowed value is %d. Aborting.\n", MAXN);
-exit(1);
-}
-
-int argshift = 0;
-if (argc>=3)
-{
-  if(strcmp(argv[2],"-exclude")==0) {
-    if (argc>=4)
-    {
-      exclude_file_name = argv[3];
-      argshift = 2;
-      printf("Excluding entries from file %s.\n", exclude_file_name);
-      @<Open the exclude-file and read first line@>
-    }
-    else {
-      PRINT_INSTRUCTIONS;
-      exit(1);
-    }
-  }
-}
-if (argc>=3+argshift) {
- 
-  split_level = atoi(argv[2+argshift]);
-  if (split_level==0)
-  { if (argv[2+argshift][0]!='-') fileprefix = argv[2+argshift];
-snprintf(fname, sizeof(fname)-1, "%s-%d.txt", fileprefix,n_max);
-parts = 1;
- }
-else
-{   
-  if (argc>=4+argshift) parts = atoi(argv[3+argshift]);
-  if (argc>=5+argshift) part = atoi(argv[4+argshift]);
-  part = part % parts;
-  if (argc>=6+argshift) fileprefix = argv[5+argshift];
-  snprintf(fname, sizeof(fname)-1, "%s-%d-S%d-part_%d_of_%d.txt", fileprefix,n_max,
-  split_level, part,parts);
-  printf("Partial enumeration: split at level n = %d. Part %d of %d.\n",
-  split_level, part,parts);
-}
-  printf("Results will be reported to file %s.\n", fname);
-  fflush(stdout);
-}
-
-
-@ @<Global ...@>=
-small_int n_max,split_level;
-unsigned int parts=1000,part=0;
-char* fileprefix = "reportPSLA";
-char* exclude_file_name = 0;
-char fname[200] = "";
-FILE *reportfile = 0;
-
 @i readDataBase
 
+
+@* Things to consider.
+
+\begin{enumerate}
+\item 
+The \texttt{-exclude} option does not work with
+the parallelization through
+\emph{splitlevel}. (This is not currently checked.)
+%Streamline the \texttt{screening} program.
+\item 
+Using inverse-PSLA makes
+\emph{screening} slower!
+It is only good if combined with screening one level before!
+Computing |inverse_PSLA| one level before |max_n| costs almost nothing.
+% (Whatever that means!)
+\item
+The |succ| and |pred| arrays could be implemented as one-dimensional
+  arrays. Need to check which is faster.
+\end{enumerate}
+
+@d SUCC_ALTERNATE(i,j) succ[i<<4 | j]
+// A shift of 4 is sufficient for |MAXN+1==16|
+@q assert(1<<SHIFT >= MAXN+1); # if @>
+
 @
+\markboth{}{Table of contents}
 \tableofcontents
+\eject\markboth{}{Index}
 \iftrue % to offset a dangling \fi from somewhere
 \end{document}
 %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
