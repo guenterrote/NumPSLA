@@ -31,13 +31,14 @@ The excludefile can be used to enumerate only _realizable_ AOTs with up to
 `exclude11.txt`, `exclude10.txt` (for up to 10 points), and `exclude09.txt` (for 9 points) are provided.
 `exclude11.txt` is provided in gzipped-format because its uncompressed size is 184.6 MBytes.
 
+## Parallel processing
 The parameters "`splitlevel parts part`" are used to separate the enumeration task
 into independent tasks for parallel processing. If the _splitlevel_ is 8, for example, then all
 PSLAs with 8 lines are visited, and we can imagine them as nodes on level 8 of
 the tree, numbered consecutively.
 Then the program will expand only those nodes whose number is congruent to _part_ modulo _parts_.
 
-For example, starting the program with `NumPSLA 11 8 100 0 out`, `NumPSLA 11 8 100 1 out`, ..., `NumPSLA 11 8 100 99 out`, 
+For example, starting the program with `NumPSLA 11 8 100 1 out`, `NumPSLA 11 8 100 2 out`, ..., `NumPSLA 11 8 100 100 out`, 
 will lead to 100 independent runs that collectively go to all nodes at level 11.
 The outputs in the files starting with `out` can then be aggregated into a single file
 with the python program `aggregate-reportfiles.py`.
