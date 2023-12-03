@@ -74,7 +74,7 @@ to count the halving-lines of each AOT.
 ctangle NumPSLA.w crossing-number-plus-halving-lines.ch -o count-crossing.c
 cweave NumPSLA.w crossing-number-plus-halving-lines.ch -o NumPSLA-crossing.tex
 ```
-For convenience, the pdf-Version of this file is available as `NumPSLA-crossing.pdf`.
+For convenience, the pdf-Version of this file, which contains the changed sections only, is available as `NumPSLA-crossing.pdf`.
 The results for up to 12 points are in the file `crossing+halving-results-12.txt`.
 For each combination of the 6 parameters
 n, hull, period, mirror-type, halving-lines, crossing-number,
