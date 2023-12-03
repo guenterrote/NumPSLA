@@ -3,6 +3,24 @@ Read all point sets from the order-type database, and
 compute the number of hull points.
 
 @x
+\documentclass[baseclass=article%
+@y
+\documentclass[baseclass=article,suppress=unchanged,
+suppress=reflist,suppress=index%
+@z
+
+@x
+\noindent{\small\today\ at \hours}
+@y
+\noindent{\small\today\ at \hours}
+
+\noindent Changed sections for the benchmark of reading from
+ the order-type database and computing the convex hull.
+
+@z
+
+
+@x
 @d readdatabase 0 // version for reading point sets of the order-type database
 @y
 @d readdatabase 1 // version for reading point sets of the order-type database
@@ -62,4 +80,9 @@ long long unsigned read_count = 0;@/
  @q printf("%Ld point sets.\n",counter); @>
   for_int_from_to(i,0,n_points)
     if(nums[i]) printf("%2d: %10Ld\n",i,nums[i]);
+@z
+
+@x
+\tableofcontents
+@y
 @z

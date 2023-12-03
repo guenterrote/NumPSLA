@@ -1,4 +1,5 @@
-\documentclass[baseclass=article%,structure=flat
+\documentclass[baseclass=article%
+%,structure=flat
 ]{cweb-hy}
 \usepackage[a4paper,margin=2cm]{geometry}
 \usepackage{hyperref}
@@ -2068,6 +2069,7 @@ void convert_to_small_lambda_matrix(small_matrix *B, int n)
     }
 }
 
+@q Insert extra extensions here --- @>
 
 @i readDataBase
 

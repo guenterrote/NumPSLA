@@ -1,6 +1,22 @@
 Change file for determining crossing numbers
 
 @x
+\documentclass[baseclass=article%
+@y
+\documentclass[baseclass=article,suppress=unchanged,
+suppress=reflist,suppress=index%
+@z
+
+@x
+\noindent{\small\today\ at \hours}
+@y
+\noindent{\small\today\ at \hours}
+
+\noindent Changed sections for computing the crossing number.
+
+@z
+
+@x
 @d MAXN 15 /* The maximum number of pseudolines for which the program will work. */
 @y
 @d MAXN 11 /* The maximum number of pseudolines for which the program will work. */
@@ -57,14 +73,14 @@ not sure where this is supposed to go
 @<Global...@>+= .......
 
 @x Here comes the computation of halving-lines
-@i readDataBase
-@y
+@q Insert extra extensions here --- @>
 
-@q* Count halving-lines.@>
-@*1 {Extension: Compute crossing-number for each AOT}.
+@y
+@q Insert extra extensions here --- @>
+@* {Extension: Compute crossing-number for each AOT}.
 
 @q# A076523 (b-file synthesized from sequence entry)@>
-@q1 1 2 3 3 6 4 9 5 13 6 18 7 22 8 27 9 33 10 38 11 44 12 51 13 57@>
+@q 2:3, 3:6, 4:9, 5:13, 6:18, 7:22, 8:27, 9:33, 10:38, 11:44, 12:51, 13:57@>
 
 By \url{https://oeis.org/A076523}, a set with
 $n=12$ points (the maximum that the program is set up
@@ -76,7 +92,7 @@ Table 1 on p.~196,
 the number of halving lines-with for odd numbers $n$ of points
 are nearly $70\,\%$ higher than for the adjacent even values.
 With a bound of 50 we should be on the safe side.
-$n=11$ point has at most 24 halving-lines
+A set with $n=11$ points has at most 24 halving-lines.
 
 @d MAX_HALVING_LINES 24
 
@@ -89,17 +105,19 @@ $n=11$ point has at most 24 halving-lines
 This algorithm is like the program for drawing the wiring diagram,
 except that it does not draw anything.
 
-consecutive tracks  |p| and $p+1$. */
-
-Use the formular from Convex quadrilaterals and $k$-sets,
-DOI:10.1090/conm/342/06138
 
 The program computes the number of crossings
 |num_crossings_on_level[p]|
 at
-each level |p| except for the crossings with line 0.
-(From this information, there is actually an easy formula to compute the crossing number
-of the complete graph $K_n$ when it is drawn on this point set.)
+each level |p| including the crossings with line 0.
+A crossing at level |p| is a crossings between
+consecutive tracks  |p| and $p+1$, $0\le p \le n-1$.
+
+From this information, there is an easy formula to compute the crossing number
+of the complete graph $K_n$ when it is drawn on this point set,
+see Lov\'{a}sz, Vesztergombi, Wagner, and Welzl, \emph{Convex quadrilaterals and
+  $k$-sets}, 
+DOI:\href{http://doi.org/10.1090/conm/342/06138}{10.1090/conm/342/06138}.
 
 @d CHECK_CROSSING(p) {{
         int i = line_at[p];
@@ -145,7 +163,7 @@ num_crossings_on_level[p]=1; // counting the crossing with line 0
 while(num_crossings) { /* Main loop */
 
      int    p = crossings[--num_crossings];
-num_crossings_on_level[p]++;
+num_crossings_on_level[p]++;xE
 
 //    update the data structures to CARRY OUT the crossing
         int i = line_at[p];
@@ -191,5 +209,9 @@ return crossing_formula/4;
 
 }
 
-@i readDataBase
+@z
+
+@x
+\tableofcontents
+@y
 @z
