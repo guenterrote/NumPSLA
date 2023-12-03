@@ -85,7 +85,7 @@ abstract order types}.
 
 @q* Introduction.@>
 The purpose of this program is to enumerate
-ORIENTED
+%ORIENTED
 abstract order types.
 (sometimes also called
 generalized configuration or a pseudoconfiguration)
@@ -95,13 +95,18 @@ repetition and with negligible storage.
 
 We consider nondegenerate cases only: no three points on a line.
 
-We abbreviate \emph{oriented
-abstract order type} by OAOT.
+We abbreviate
+\emph{abstract order type} by AOT and
+ \emph{oriented
+   abstract order type} by OAOT.
+(An \emph{oriented} abstract order type can be distinguished from its
+mirror image by OAOT.
+
 %For each OAOT for $n$ points has a unique parent with $n-1$ points.
 %This defines a tree structure on the OAOTs.
 %The principle of the enumeration is a depth-first traversal of this tree.
 
-(For statistics, can still report only one orientation of two mirror types)
+%(For statistics, can still report only one orientation of two mirror types)
 
 @*1 Pseudoline arrangements and abstract order types.
 
