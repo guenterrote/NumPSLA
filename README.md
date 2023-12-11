@@ -85,7 +85,7 @@ The script
 ```
 python3 makereport.py crossing+halving-results-12.txt
 ```
-will read these data and produce some tables of data
+will read these data and arrange them into a few tables.
 
 # Benchmark
 As a benchmark, we read point sets from the order-type database and compute their convex hull.
