@@ -43,7 +43,7 @@ For example, starting the program with `NumPSLA 11 8 100 1 out`, `NumPSLA 11 8 1
 will lead to 100 independent runs that collectively go to all nodes at level 11.
 The outputs in the files starting with `out` can then be aggregated into a single file
 with the python program `aggregate-reportfiles.py`.
-Beware that this feature does not work together with exclude-files. (But the program does not check this!)
+Beware that this feature does not work together with exclude-files.
 
 # Utility programs in Python
 
