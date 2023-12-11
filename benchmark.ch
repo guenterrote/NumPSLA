@@ -64,10 +64,10 @@ long long unsigned read_count = 0;@/
 @x
       int n= n_points-1;
       PSLA_from_points(n_points);
-      small_int hulledges[MAXN+1];
-      small_int hullsize = upper_hull_PSLA(n, hulledges);
-      PSLA P;
-      compute_lex_smallest_PSLA(&P, n, hulledges, hullsize);
+      int hulledges[MAXN+1];
+      int hullsize = upper_hull_PSLA(n, hulledges);
+      P_matrix P;
+      compute_lex_smallest_P_matrix(&P, n, hulledges, hullsize);
       compute_fingerprint(&P,n);
       printf("%s:\n",fingerprint);
     }

@@ -19,7 +19,29 @@ suppress=reflist,suppress=index%
 @x
 @d MAXN 15 /* The maximum number of pseudolines for which the program will work. */
 @y
+
+\emph{Change:}
+We are keeping statistics for several independent characteristics,
+one of which (the |crossing_number|) can rise to high values
+(see |MAX_CROSSINGS| in Section~\ref{crossing-number}).
+Therefore, we reduce the maximum number |MAXN| of pseudolines from 15 to what we really need.
+
 @d MAXN 11 /* The maximum number of pseudolines for which the program will work. */
+@z
+
+@x
+\item mirror symmetry, with or without fixed vertex on the hull (3 possibilities).
+\end{itemize}
+@y
+\item mirror symmetry, with or without fixed vertex on the hull (3 possibilities).
+\end{itemize}
+In addition, we keep
+\begin{itemize}
+\item the number of halving-lines,
+|num_halving_lines|.
+\item the crossing number, 
+|crossing_number|.
+\end{itemize}
 @z
 
 
@@ -35,14 +57,14 @@ int num_halving_lines; // global variable; this is not clean
 
 @x updating the statistics
   classcount[n_points][hullsize][rotation_period][
-  !is_symmetric? NO_MIRROR : has_fixpoint ? MIRROR_WITH_FIXPOINT :
-  MIRROR_WITHOUT_FIXPOINT] ++;
+  !has_mirror_symmetry? NO_MIRROR : has_fixed_vertex ? MIRROR_WITH_FIXED_VERTEX :
+  MIRROR_WITHOUT_FIXED_VERTEX] ++;
 @y
   int crossing_number = count_crossings(n);
   assert (num_halving_lines <= MAX_HALVING_LINES);
   classcount[n_points][hullsize][rotation_period][
-  !is_symmetric? NO_MIRROR : has_fixpoint ? MIRROR_WITH_FIXPOINT :
-  MIRROR_WITHOUT_FIXPOINT][num_halving_lines][crossing_number] ++;
+  !has_mirror_symmetry? NO_MIRROR : has_fixed_vertex ? MIRROR_WITH_FIXED_VERTEX :
+  MIRROR_WITHOUT_FIXED_VERTEX][num_halving_lines][crossing_number] ++;
 @z
 
 @x statistics reporting:
@@ -52,7 +74,7 @@ int num_halving_lines; // global variable; this is not clean
 @z  
 
 @x statistics reporting:
-    for(small_int t=0; t<3; t++)
+    for_int_from_to(t,0, 2)
       if (classcount[n][k][p][t])
   fprintf(reportfile,
      "%c %d %d %d %d  %Ld\n", c,n,k,p,t,  classcount[n][k][p][t]);
@@ -73,15 +95,19 @@ not sure where this is supposed to go
 @<Global...@>+= .......
 
 @x Here comes the computation of halving-lines
-@q Insert extra extensions here --- @>
+@*1 Further processing of AOTs.
+Problem-specific processing can be added here.
+@<Further processing of the AOT@>=
+// Currently no further processing of the AOT.
 
 @y
-@q Insert extra extensions here --- @>
 @* {Extension: Compute crossing-number for each AOT}.
+\label{crossing-number}
 
 @q# A076523 (b-file synthesized from sequence entry)@>
 @q 2:3, 3:6, 4:9, 5:13, 6:18, 7:22, 8:27, 9:33, 10:38, 11:44, 12:51, 13:57@>
 
+What range of values should we anticipate for the number of halving-lines?
 By \url{https://oeis.org/A076523}, a set with
 $n=12$ points (the maximum that the program is set up
 to deal with), has at most 18 halving-lines.
@@ -91,9 +117,12 @@ Discrete Applied Mathematics 319 (2022) 194--206, \url{https://doi.org/10.1016/j
 Table 1 on p.~196,
 the number of halving lines-with for odd numbers $n$ of points
 are nearly $70\,\%$ higher than for the adjacent even values.
-With a bound of 50 we should be on the safe side.
-A set with $n=11$ points has at most 24 halving-lines.
-
+I could not find the bounds for small odd $n$ in the literature.
+%With a bound of 50 we should be on the safe side.
+After running the program once with a larger safety margin,
+it was found that
+a set with $n=11$ points has at most 24 halving-lines.
+(The program checks if the bound is not violated.)
 @d MAX_HALVING_LINES 24
 
 
