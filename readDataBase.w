@@ -40,7 +40,7 @@ typedef int_least64_t large_int; /* for intermediate calculations */
 
 @*1 Turn point set with coordinates into PSLA.
 
-We insert the lines one by one into the arrangement.  This is simular
+We insert the lines one by one into the arrangement.  This is similar
 to the insertion of line $n$ in the recursive enumeration procedure.
 The difference is that we don't try all possibilities for the edge
 through which line $n$ exits, but we choose the correct edge the
@@ -113,7 +113,7 @@ void insert_line(int n)
     }
 }
 
-@*1 Do the actual reading.
+@*1 Select the order-type files to be read.
 
 We have to figure out the filenames and the format of the stored numbers.
 We assume that the order types with up to 10 points are stored in the
@@ -136,7 +136,7 @@ void swap_all_bytes(int n)
     {
       points[i].x = (points[i].x>>8) | (points[i].x<<8);
       points[i].y = (points[i].y>>8) | (points[i].y<<8);
-      /* Assumes 16 bits. It is important that coordinates are UNSIGNED. */
+      /* Assumes 16 bits. It is important that coordinates are \emph{unsigned}. */
     }
 }
   
@@ -153,7 +153,7 @@ int  n_points = n_max+1;
   boolean is_big_endian = (*(uint16_t *)"\0\xff" < 0x100);
   if (bits>8) {
   if (is_big_endian)
-      printf("This computer is big endian.\n");
+      printf("This computer is big-endian.\n");
   else
       printf("This computer is little-endian. No byte swaps are necessary.\n");
   }     
@@ -171,7 +171,8 @@ int  n_points = n_max+1;
   printf("%Ld point sets were read from the file(s).\n",read_count);
 
 
-@ Open and read database file and process the input points.
+@*1 Do the actual reading.
+ Open and read database file and process the input points.
 @<Subro...@>=
 long long unsigned read_count = 0;@/
 
@@ -206,10 +207,10 @@ void read_database_file(char *inputfile, int bits, int record_size,
 	  }
       int n= n_points-1;
       PSLA_from_points(n_points);
-      small_int hulledges[MAXN+1];
-      small_int hullsize = upper_hull_PSLA(n, hulledges);
-      PSLA P;
-      compute_lex_smallest_PSLA(&P, n, hulledges, hullsize);
+      int hulledges[MAXN+1];
+      int hullsize = upper_hull_PSLA(n, hulledges);
+      P_matrix P;
+      compute_lex_smallest_P_matrix(&P, n, hulledges, hullsize);
       compute_fingerprint(&P,n);
       printf("%s:\n",fingerprint);
     }
