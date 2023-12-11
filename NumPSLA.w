@@ -205,181 +205,6 @@ simple {projective} pseudoline arrangements with a marked cell.
 %\href{https://oeis.org/A006246}{A006246},
 %\href{https://oeis.org/A006248}{A006248}. NO LONGER CURRENT.
 
-
-@* The main program.
-
-Each PSLA for $n$ lines has a unique parent with $n-1$ lines.  This
-defines a tree structure on the PSLAs.  The principle of the
-enumeration algorithm is a depth-first traversal of this tree.
-
-
-@d MAXN 15 /* The maximum number of pseudolines for which the program will work. */
-
-
-@p
-
-
-@<Include standard libaries@>@;
-@<Types and data structures@>@;
-@<Global variables@>@;
-@<Subroutines@>@;
-@<Core subroutine for recursive generation@>@;
-int main (int argc,char* argv[])
-{
-  @qLocal variables@>
-  @<Parse the command line@>;
-#if readdatabase /*  reading from the database
-*/
- @<Read all point sets...@>@;
- return 0;
-#endif
-#if enumAOT
-  @<Initialize statistics and open reporting file@>;
-  @<Start the generation@>;
-  @<Report statistics@>;
-#endif
-  return 0;
-}
-
-@*1 Preprocessor switches.
-
-The program has the enumeration procedure at its core, but it can be
-configured to
-perfom different tasks, by setting  preprocessor switches at
-compile-time.
-
-We assume that the program will anyway be modified and extended for specific
-counting or enumeration tasks, and it makes sense to
-set these options at compile-time.
-
-(Other options, which are less permanent, can be set by
-command-line switches, see Section~\ref{sec:command}.)
-
-@d enumAOT 1 /* purpose is enumeration of AOTs */
-/* Other purposes might be enumeration of PSLAs */
-@d readdatabase 0 // version for reading point sets of the order-type database
-@d generatelist 0  /* List all PSLAs plus their IDs, as preparation for generating
-exclude-files of nonrealizable AOTs, requires |enumAOT==1|. */
-@d profile 1 // gather statistics and profiling information
-
-
-@ Type definitions.
-
-
-@<Types and data...@>=
-
-typedef enum {@+@!false,@+@!true @+ } boolean;
-@#
-
-
-@ Standard libraries
-@<Include standard libaries@>=
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-
-
-@*1 Auxiliary macro for \textbf{for}-loops.
-
-I don't want to write $x$ three times.
-
-@q for_t_from_to(type,x,first,last)  for(type x=first; x<= last; x++)@>
-@d for_int_from_to(x,first,last)  for(int x=first; x<= last; x++)
-
-@q type double@>
-@s for_t_from_to for
-@f for_int_from_to for
-
-@q @@d print_array(a,length,begin,separator,end) { // for reporting and debugging@>
-@q    printf(begin);@>
-@q    for_int_from_to(j, 0,length-1) {@>
-@q    if (j>0) printf(separator);@>
-@q    printf("%d",a[j]);@>
-@q    }@>
-@q    printf(end);@>
-@q    } /* for \texttt{gcc}, compile with \texttt{-Wno-format-zero-length} to suppress warnings */@>
-
-@*1 Command-line arguments.
-\label{sec:command}    
-@d PRINT_INSTRUCTIONS     printf(
-"Usage: %s n [-exclude excludefile] [splitlevel parts part] [fileprefix]\n", argv[0]);
-
- @<Global ...@>=
-int n_max,split_level=0;
-unsigned int parts=1000,part=0;
-char* fileprefix = "reportPSLA"; // default name
-char* exclude_file_name = 0;
-char fname[200] = "";
-FILE *reportfile = 0;
-
-@
-@<Parse...@>=
-
-if (argc<2)
-n_max = 7;
-else {
-  if (argv[1][0]=='-') { /* first argument ``\texttt{--help}'' gives
-    help message. */
-    PRINT_INSTRUCTIONS;
-    exit(0);
-}
- n_max = atoi(argv[1]);
-}
-printf("Enumeration up to n = %d pseudolines, %d points.\n", n_max, n_max+1);
-if (n_max>MAXN)
-{ 
-printf("The largest allowed value is %d. Aborting.\n", MAXN);
-exit(1);
-}
-
-int argshift = 0;
-if (argc>=3)
-{
-  if(strcmp(argv[2],"-exclude")==0) {
-    if (argc>=4)
-    {
-      exclude_file_name = argv[3];
-      argshift = 2;
-      printf("Excluding entries from file %s.\n", exclude_file_name);
-      @<Open the exclude-file and read first line@>
-    }
-    else {
-      PRINT_INSTRUCTIONS;
-      exit(1);
-    }
-  }
-}
-if (argc>=3+argshift) {
- 
-  split_level = atoi(argv[2+argshift]);
-  if (split_level==0)
-  { if (argv[3+argshift][0]!='-') fileprefix = argv[3+argshift];
-snprintf(fname, sizeof(fname)-1, "%s-%d.txt", fileprefix,n_max);
-parts = 1;
- }
-else
-{
-  if (exclude_file_name != 0)
-  { printf("The -exclude option with a positive splitlevel %d is not implemented. Aborting.\n", split_level);
-    exit(1);
-  }
-
-  if (argc>=4+argshift) parts = atoi(argv[3+argshift]);
-  if (argc>=5+argshift) part = atoi(argv[4+argshift]);
-  part = part % parts;
-  if (argc>=6+argshift) fileprefix = argv[5+argshift];
-  snprintf(fname, sizeof(fname)-1, "%s-%d-S%d-part_%d_of_%d.txt", fileprefix,n_max,
-  split_level, part,parts);
-  printf("Partial enumeration: split at level n = %d. Part %d of %d.\n",
-  split_level, part,parts);
-}
-  printf("Results will be reported to file %s.\n", fname);
-  fflush(stdout);
-}
-
-
 @* Representations of pseudoline arrangements.
 
 Here is an $x$-monotone
@@ -387,7 +212,8 @@ pseudoline arrangement with $n=5$ pseudolines,
 together with a primitive graphic representation of a different
 pseudoline arrangement
 as produced
-by the function |print_wiring_diagram|:
+by the function |print_wiring_diagram|
+(see Section~\ref{wiring-diagram}):
 % \begin{verbatim}
 
 \medskip
@@ -484,7 +310,7 @@ whole program.
 
 @d SUCC(i,j) succ[i][j] // access macros
 @d PRED(i,j) pred[i][j]
-
+@#
 @d LINK(j,  k1,k2) { // make crossing with $k_1$ and $k_2$ adjacent on line $j$
     SUCC(j,k1) = k2;
     PRED(j,k2) = k1;
@@ -501,6 +327,195 @@ whole program.
 @<Global...@>=
 int succ[MAXN+1][MAXN+1];
 int pred[MAXN+1][MAXN+1];
+
+
+@* The main program.
+
+Each PSLA for $n$ lines has a unique parent with $n-1$ lines.  This
+defines a tree structure on the PSLAs.  The principle of the
+enumeration algorithm is a depth-first traversal of this tree.
+
+
+@d MAXN 15 /* The maximum number of pseudolines for which the program will work. */
+
+
+@p
+
+
+@<Include standard libaries@>@;
+@<Types and data structures@>@;
+@<Global variables@>@;
+@<Subroutines@>@;
+@<Core subroutines for recursive generation@>@;
+int main (int argc,char* argv[])
+{
+  @qLocal variables@>
+  @<Parse the command line@>;
+#if readdatabase /*  reading from the database
+*/
+ @<Read all point sets...@>@;
+ return 0;
+#endif
+#if enumAOT
+  @<Initialize statistics and open reporting file@>;
+  @<Start the generation@>;
+  @<Report statistics@>;
+#endif
+  return 0;
+}
+
+@*1 Preprocessor switches.
+
+The program has the enumeration procedure at its core, but it can be
+configured to
+perfom different tasks, by setting  preprocessor switches at
+compile-time.
+
+We assume that the program will anyway be modified and extended for specific
+counting or enumeration tasks, and it makes sense to
+set these options at compile-time.
+
+(Other options, which are less permanent, can be set by
+command-line switches, see Section~\ref{sec:command}.)
+
+@d enumAOT 1 /* purpose is enumeration of AOTs */
+/* Other purposes might be enumeration of PSLAs */
+@d readdatabase 0 // version for reading point sets of the order-type database
+@d generatelist 0  /* List all PSLAs plus their IDs, as preparation for generating
+exclude-files of nonrealizable AOTs, requires |enumAOT==1|. */
+@d profile 1 // gather statistics and profiling information
+
+
+@*1 On programming style.
+
+\texttt{CWEB} provides a good structuring facility
+while keeping all pieces and the documentation in one place.
+This leads to a large monolithic program in one file, as opposed to
+a separation in thematically grouped files that a \textsc{c}-project
+usually has.
+
+For simplicity, I often use global variables.
+
+Some variations of the program are implemented via
+preprocessor switches; for others, there is the change-file mechanism
+of \texttt{CWEB}.
+
+@ The |boolean| type.
+
+
+@<Types and data...@>=
+
+typedef enum {@+@!false,@+@!true @+ } boolean;
+@#
+
+
+@ Standard libraries
+@<Include standard libaries@>=
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+
+
+@*1 Auxiliary macro for \textbf{for}-loops.
+
+I don't want to write $x$ three times.
+
+@q for_t_from_to(type,x,first,last)  for(type x=first; x<= last; x++)@>
+@d for_int_from_to(x,first,last)  for(int x=first; x<= last; x++)
+
+@q type double@>
+@s for_t_from_to for
+@f for_int_from_to for
+
+@q @@d print_array(a,length,begin,separator,end) { // for reporting and debugging@>
+@q    printf(begin);@>
+@q    for_int_from_to(j, 0,length-1) {@>
+@q    if (j>0) printf(separator);@>
+@q    printf("%d",a[j]);@>
+@q    }@>
+@q    printf(end);@>
+@q    } /* for \texttt{gcc}, compile with \texttt{-Wno-format-zero-length} to suppress warnings */@>
+
+@*1 Command-line arguments.
+\label{sec:command}    
+@d PRINT_INSTRUCTIONS     printf(
+"Usage: %s n [-exclude excludefile] [splitlevel parts part] [fileprefix]\n", argv[0]);
+
+ @<Global ...@>=
+int n_max,split_level=0;
+unsigned int parts=1000,part=0;
+char* fileprefix = "reportPSLA"; // default name for the report-file
+char* exclude_file_name = 0;
+char fname[200] = "";
+FILE *reportfile = 0;
+
+@
+@<Parse...@>=
+
+if (argc<2)
+n_max = 7;
+else {
+  if (argv[1][0]=='-') { /* first argument ``\texttt{--help}'' gives
+    help message. */
+    PRINT_INSTRUCTIONS;
+    exit(0);
+}
+ n_max = atoi(argv[1]);
+}
+printf("Enumeration up to n = %d pseudolines, %d points.\n", n_max, n_max+1);
+if (n_max>MAXN)
+{ 
+printf("The largest allowed value is %d. Aborting.\n", MAXN);
+exit(1);
+}
+
+int argshift = 0;
+if (argc>=3)
+{
+  if(strcmp(argv[2],"-exclude")==0) {
+    if (argc>=4)
+    {
+      exclude_file_name = argv[3];
+      argshift = 2;
+      printf("Excluding entries from file %s.\n", exclude_file_name);
+      @<Open the exclude-file and read first line@>
+    }
+    else {
+      PRINT_INSTRUCTIONS;
+      exit(1);
+    }
+  }
+}
+if (argc>=3+argshift) {
+ 
+  split_level = atoi(argv[2+argshift]);
+  if (split_level==0)
+  { if (argv[3+argshift][0]!='-') fileprefix = argv[3+argshift];
+snprintf(fname, sizeof(fname)-1, "%s-%d.txt", fileprefix,n_max);
+parts = 1;
+ }
+else
+{
+  if (exclude_file_name != 0)
+  { printf("The -exclude option with a positive splitlevel %d is not implemented. Aborting.\n", split_level);
+    exit(1);
+  }
+
+  if (argc>=4+argshift) parts = atoi(argv[3+argshift]);
+  if (argc>=5+argshift) part = atoi(argv[4+argshift]);
+  part = part % parts;
+  if (argc>=6+argshift) fileprefix = argv[5+argshift];
+  snprintf(fname, sizeof(fname)-1, "%s-%d-S%d-part_%d_of_%d.txt", fileprefix,n_max,
+  split_level, part,parts);
+  printf("Partial enumeration: split at level n = %d. Part %d of %d.\n",
+  split_level, part,parts);
+}
+  printf("Results will be reported to file %s.\n", fname);
+  fflush(stdout);
+}
+
 
 
 @* Recursive Enumeration.
@@ -522,7 +537,7 @@ in the order $1,2,\dts,n$.
 \end{figure}
 
 @
-@<Core subroutine for recursive generation@>=
+@<Core subroutines for recursive generation@>=
 
 void recursive_generate_PSLA_start(int n);
 
@@ -550,12 +565,7 @@ its endpoint is the crossing with |k_right|.
       { // $F$ is the top face.
 	LINK(n,@,@,entering_edge,0);    /* complete the insertion of line $n$ */
 	@<Update counters@>@;
-        @<Indicate Progress@>;
-        boolean is_excluded = false;
-	@<Check for exclusion...@>@;
-        if (is_excluded) return;
-        @<Gather statistics about the AOT, collect output@>@;
-@<Further processing of the AOT@>@;
+        @<Process the PSLA; |return| if excluded@>@;
 	if (n<n_max)
           if (n!=split_level || countPSLA[n]%parts == part) {
 #if enumAOT // screening one level below
@@ -637,9 +647,24 @@ shortly in the first recursive call. */
 
   recursive_generate_PSLA_start(3); 
 
-
-
 @
+@<Update counters@>=
+    countPSLA[n]++; // update global counter (``accession number'')
+    localCountPSLA[n]++; // update local counter
+@qif(n==n_max)  printf("%d\n",PRED(1,0));@>
+
+  @*1 Handling of a PSLA.
+
+@<Process the PSLA...@>=  
+        @<Indicate Progress@>;
+        boolean is_excluded = false;
+	@<Check for exclusion...@>@;
+        if (is_excluded) return;
+        @<Gather statistics about the AOT, collect output@>@;
+@<Further processing of the AOT@>@;
+
+@ Indicate Progress. The user should not despair while waiting for a
+long run.
 @<Indicate Progress@>=
 if (n==n_max && countPSLA[n] % 50000000000==0) { // $5\times 10^{10}$
 
@@ -651,11 +676,6 @@ printf("..%Ld.. ", countPSLA[n]);
   fflush(stdout);
 }
 
-@
-@<Update counters@>=
-    countPSLA[n]++; // update global counter (``accession number'')
-    localCountPSLA[n]++; // update local counter
-@qif(n==n_max)  printf("%d\n",PRED(1,0));@>
 
 @* Handling the exclude-file.
 
@@ -719,8 +739,7 @@ localCountPSLA[n]==excluded_code[n])
  matched_length = 2;
 
 
- @ I don't know why the following program piece is so badly formatted
- by \texttt{cweave}.
+ @
  @<Get the next excluded decimal code from the exclude-file@>=
  do {
 if (fscanf(exclude_file, "%s\n", exclude_file_line)!=EOF)
@@ -871,7 +890,9 @@ k<i && i<j ? invP[i][j]<invP[i][k] :
 This is easy; we just scan the top face.  We
 know that 0, 1, and $n$ belong to the convex hull.  0 represents the line at $\infty$).
 
-The input is taken from the global variable |succ|. (|pred| is not used.)
+The input is taken from the global variable |succ|. (|pred| is not
+used.)
+The output is stored in the array |hulledges|.
 
 \iffalse
 int getHulledges_PSLA(int n,
@@ -936,7 +957,7 @@ visits certain branches of the tree.
 The enumeration tree has only one node on levels 1 and 2. Thus we
 start the fingerprint at level~3.
 
-(In addition, the PSLAs of each size $n$ are numbered by the \emph{global
+(In addition, the PSLAs of each size $n$ are numbered by the {global
 counter} |countPSLA|. This can be used as an ``accession number'' to
 identify a PSLA, provided that the PSLAs of size $n$ are enumerated in
 full.)
@@ -954,6 +975,7 @@ void print_id(int n)
 @* Output.
 
 @*1 Prettyprinting of a wiring diagram.
+\label{wiring-diagram}
 Fill a buffer of lines
 columnwise from left to right.
 
@@ -1047,9 +1069,9 @@ A concise description of a PSLA consists of the $P$-matrix entries,
 prefixed by the letter \texttt{P} and
 with the rows separated by \texttt{!} symbols.
 The procedure |print_pseudolines_compact| prints a more compact
-version where the redundant parts, which are the same in all
+version that leaves out redundant parts, which are the same in all
 $P$-matrices or which can be easily inferred from the reamining
-information, is omitted.
+information.
 
 @<Subr...@>=
 
@@ -1172,11 +1194,11 @@ compute_fingerprint(&P,n);
 
 
 
-@* Abstract order types.
+@* Enumerating abstract order types.
 
 @*1 Compute the \texorpdfstring{$P$}{P}-matrix for a different starting edge.
 
-For reference we show how to compute the matrix from another
+For reference we show how to compute the matrix from an arbitrary
 \emph{starting edge}.
 The starting edge is specified by the line |line0| on which it lies,
  its right endvertex
@@ -1184,7 +1206,7 @@ The starting edge is specified by the line |line0| on which it lies,
 a \emph{direction}.
 The edge lies between
 |@t\\{left\_vertex}@> == PRED(line0,right_vertex)| and
-|right_vertex|, (which fulfills |right_vertex == SUCC(line0,@t\\{left\_vertex}@>)|).
+|right_vertex| (which fulfills |right_vertex == SUCC(line0,@t\\{left\_vertex}@>)|).
 The direction is
 in the direction of the |succ|-pointers if
 |reversed==false|
@@ -1234,6 +1256,9 @@ $j$. */
        (*P)[p][0]= 0;
        int i = Sequence[pos];
        int j = line0;
+       @/
+       /* We fill row $P_p$ from right to left. The reason for this
+       choice is explained in Section~\ref{sec:lex-min}. */
        for_int_from_to(q,1,n-1 )
        { // Compute $P_{p,n-q}$
          j = reversed ? SUCC(i,j): PRED(i,j);
@@ -1332,9 +1357,7 @@ symmetry of the AOT:
 These output parameters --- |rotation_period|,
 |has_mirror_symmetry|, and
 |has_fixed_vertex| ---
-are determined on the way as an easy side result.
-
-
+are determined on the way as a side result.
 |has_fixed_vertex| is only set if the PSLA is mirror-symmetric.
 
 We scan the entries of $P$ row-wise from right to left.
@@ -1344,7 +1367,7 @@ Initially we have $2\times{}$|hullsize| candidates,
 |hullsize| ``forward'' candidates and the same number of
 mirror-symmetric, reversed candidates.
 
-Candidates $0\dts |numcandidates_forward|-1$ are forward candidates.
+The candidates with numbers $0\dts |numcandidates_forward|-1$ are forward candidates.
 The remaining candidates up to |numcandidates-1| are reverse (mirror)
 candidates.
 
@@ -1390,7 +1413,7 @@ int *hulledges, int hullsize)
        for(c=0;c<numcandidates_forward;c++)
        {
          @<Process candidate |c|, keep in list and advance |new_candidates|
-         if equal; reset |new_candidates| if better value than |current_min|@>@;
+         if equal;...@>
        }
        new_candidates_forward = new_candidates; 
           /* can be reset in the next loop */
@@ -1400,7 +1423,7 @@ int *hulledges, int hullsize)
        for(;c<numcandidates;c++)
        {
          @<Process candidate |c|, keep in list and advance |new_candidates|
-         if equal; reset |new_candidates| if better value than |current_min|@>@;
+         if equal; reset |new_candidates|...@>@;
        }
        numcandidates_forward = new_candidates_forward;
        numcandidates = new_candidates;
@@ -1409,13 +1432,14 @@ int *hulledges, int hullsize)
      }
    }
  }
-@ The list of candidates is scanned and simultaneously overwritten
+@ The list |candidate| of candidates is scanned and simultaneously overwritten
 with new values.
 
-@<Process candidate |c|, keep in list and advance |new_candidates|
-         if equal...@>=
-         int r = candidate[c];
-         int i=Sequence[r][pos]; // We are proceeding on line i
+@<Process candidate |c|, keep in list and advance |new_candidates| if
+equal;
+reset |new_candidates| if better value than |current_min| is found@>=
+int r=candidate[c];
+int i=Sequence[r][pos]; // We are proceeding on line i
          int j=current_crossing[c];
          j = reversed ? SUCC(i,j): PRED(i,j);
          int a = new_label[r][j];
@@ -1444,7 +1468,7 @@ This is a variation of the procedure
 The output parameters |rotation_period|,
 |has_mirror_symmetry|,
 |has_fixed_vertex|, which characterize the
-symmetry of the AOT, are determined on the way, as an easy side result.
+symmetry of the AOT, are determined on the way, as a side result.
 
 As a speed-up, there is a fast screening procedure that tries
 to eliminate a few candidates in advance.
@@ -1582,7 +1606,7 @@ $P_{p,n-q}$ in the matrix $P^0$.
 @ 
 @<Determine the result parameters |rotation_period|,
 |has_mirror_symmetry|,
-|has_fixed_vertex|, from the set of remaining candidates.@>=
+|has_fixed_vertex|, by analyzing the set of remaining candidates@>=
 {
   if(numcandidates_forward>0)
     *rotation_period = candidate[0];
@@ -1597,7 +1621,7 @@ $P_{p,n-q}$ in the matrix $P^0$.
   }
 
 
-@* Fast screening of candidates.
+@*  Screening of candidates to reduce the running time.
 
 Suppose we don't have correct labels, but we only known line 0 and
 line 1. We can still determine the upper right corner $P_{1n}$ of the
@@ -1867,8 +1891,11 @@ Characteristics:
 \item mirror symmetry, with or without fixed vertex on the hull (3 possibilities).
 \end{itemize}
 
-|PSLAcount| gives OAOT of point sets with a marked point on the convex hull.
+|PSLAcount| counts OAOT of point sets with a marked point on the
+convex hull,
+but no specified traversal direction.
 http://oeis.org/A006245 (see below) is the same sequence with $n$ shifted by 0.
+|xPSLAcount| counts OAOT of point sets with a marked point on the ... ?
 
 @d NO_MIRROR 0
 @d MIRROR_WITH_FIXED_VERTEX 1
@@ -1882,7 +1909,7 @@ long long unsigned PSLAcount[MAXN+2];
 /*A006245, Number of primitive sorting networks on $n$ elements; also number of rhombic tilings of $2n$-gon.
 Also the number of oriented matroids of rank 3 on $n$(?) elements. */
 /* 1, 1, 2, 8, 62, 908, 24698, 1232944, 112018190, 18410581880, 5449192389984
-$\ldots$ until $n=15$. */
+$\ldots$ until $n=16$. */
 long long unsigned xPSLAcount[MAXN+2];
 long long unsigned classcount[MAXN+2][MAXN+2][MAXN+2][3];
 
@@ -1910,10 +1937,9 @@ xPSLAcount[2]=
 
 @ @<Gather statistics...@>=
 
-@//* Determine the extreme points: */
    int hulledges[MAXN+1];
-   int hullsize = upper_hull_PSLA(n, hulledges);
-
+   int hullsize = upper_hull_PSLA(n, hulledges);/* Determine the extreme points: */
+@#
    int rotation_period;
    boolean has_fixed_vertex;
    boolean has_mirror_symmetry;
@@ -1929,6 +1955,11 @@ hulledges, hullsize,
 if(lex_smallest)
 {
   countU[n_points]++;
+  @/
+  /* We count to contribution from this AOT to the various
+  counters
+  |countO|, |PSLAcount|, |xPSLAcount|
+  according to the symmetry information. */
   if (has_mirror_symmetry)
   {
     countO[n_points]++;
@@ -1946,8 +1977,8 @@ if(lex_smallest)
     xPSLAcount[n]+=rotation_period;
   }
 
-  classcount[n_points][hullsize][rotation_period][
-  !has_mirror_symmetry? NO_MIRROR : has_fixed_vertex ? MIRROR_WITH_FIXED_VERTEX :
+  classcount[n_points][hullsize][rotation_period]
+  @|[  !has_mirror_symmetry? NO_MIRROR : has_fixed_vertex ? MIRROR_WITH_FIXED_VERTEX :
   MIRROR_WITHOUT_FIXED_VERTEX] ++;
 }
 
@@ -1990,7 +2021,7 @@ printf("passed %Ld, saved %Ld out of %Ld = %.2f%%\n", cpass, csaved,
 
 @
 The statistics gathered in the |classcount|
-array is
+array are
 written to a |reportfile| so that a subsequent program
 can conveniently read and process it.
 
@@ -2045,8 +2076,9 @@ in the |succ| and |pred| arrays
 $P$-matrix is / is not available.
 
 @*1 Further exlusion criteria.
+\label{further-exlusion-criteria}
 
-If some PSLAs and their subtrees should not be considered,
+If some PSLAs or AOTs and their subtrees should not be considered,
 they can be filtered here, by setting |is_excluded| to |false|.
 @<Check for exclusion...@>=
 // Currently no further exclusion tests.
@@ -2056,26 +2088,26 @@ Problem-specific processing can be added here.
 @<Further processing of the AOT@>=
 // Currently no further processing of the AOT.
   
-@
+@*2 Listing all PSLAs.
+List all PSLAs plus their IDs, as preparation for generating
+exclude-files of nonrealizable AOTs.
 
-After computing the inverse $P$-matrix, one can perform a few tests on the
-order type, using orientation queries.
-
-There are a couple of test programs.
-...
 
 @<Further processing...@>=
 
-#if generatelist /* List all PSLAs plus their IDs, as preparation for generating
-exclude-files of nonrealizable AOTs */
+#if generatelist
 if(n==n_max && lex_smallest) {
-   @<Print PSLA-fingerprint@>
+   @<Print PSLA-fingerprint@>@;
 print_id(n);printf("\n"); }
 #endif
 @qprint_id(n); printf(" .. %d",matched_length); printf(" --%Ld\n",countPSLA[n]);@>
 
+@*2 Checking correctness of the orientation test.
 
-@ The following test program
+
+After computing the inverse $P$-matrix, one can perform a few tests on the
+order type, using orientation queries.
+The following test program
 compares the orientation queries against an
 explicitly computed three-dimensional $\Lambda$-matrix
 (see Section~\ref{Lambda}).
@@ -2110,7 +2142,10 @@ convert_small_to_large(&S, &L, n_points);
   ;
 
 }  
+@*2 Various further test programs.
 
+@ Print ``some'' example.
+@<Further processing...@>=
 #if 0
 if(n==n_max && countPSLA[n]==50) { // print ``some'' example
   P_matrix PP,invPP;
@@ -2122,11 +2157,10 @@ if(n==n_max && countPSLA[n]==50) { // print ``some'' example
   }
 #endif
 
-@ Various further test programs.
+
+@ Estimate the size of possible subproblems for a divide-\&conquer Ansatz.
 @<Further processing...@>=
-
-
-#if 0  // estimate size of possibly subproblems for d\&c Ansatz
+#if 0  // estimate size of possible subproblems for divide-\&conquer Ansatz
 #define MID 5
 if(n==2*MID-2)
 {
@@ -2300,7 +2334,7 @@ int n)
 
 
 
-@i readDataBase
+@i readDataBase.w
 
 
 @* Things to consider.
@@ -2311,13 +2345,21 @@ The \texttt{-exclude} option does not currently work with
 the parallelization through
 \emph{splitlevel}.
 (This combination of input parameters is checked.)
-\item Does the enumeration of PSLAs work in constant amortized time (CAT)?
+\item Does the enumeration of PSLAs work in constant amortized time
+  (CAT)?
+  Test this experimentally by a loop counter.
 \item Enumerate PSLAs for which the corresponding AOT has a given
   symmetry.
   In connection with the PSLAs without regard to symmetries, which
   are known up to 16 lines (17 points), this would lead to counts of
   AOTs with up to 17 points without much computational effort.
   (The current record is 13 points).
+\item Projective types of PSLAs, projective AOTs.
+\item Better drawings of PSLAs.
+\item Selective exploration of subtrees. Goal-directed search for
+  particular examples. Can be implemented by definining
+  further exlusion criteria,
+  see Section~\ref{further-exlusion-criteria}.
 \item \emph{Entropy encoding} of PSLAs?
 %Streamline the \texttt{screening} program.
 \item 
@@ -2328,7 +2370,9 @@ Computing |inverse_PSLA| one level before |max_n| costs almost nothing.
 % (Whatever that means!)
 \item
 The |succ| and |pred| arrays could be implemented as one-dimensional
-  arrays. Need to check which is faster.
+arrays. Need to check which is faster.
+% on computer at home slightly slower, maybe 1-2 %
+% see change file succ-1d.ch
 \end{enumerate}
 
 @d SUCC_ALTERNATE(i,j) succ[(i)<<4 | (j)]

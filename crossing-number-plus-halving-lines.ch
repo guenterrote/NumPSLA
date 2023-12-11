@@ -56,8 +56,8 @@ int num_halving_lines; // global variable; this is not clean
 @z
 
 @x updating the statistics
-  classcount[n_points][hullsize][rotation_period][
-  !has_mirror_symmetry? NO_MIRROR : has_fixed_vertex ? MIRROR_WITH_FIXED_VERTEX :
+  classcount[n_points][hullsize][rotation_period]
+  @|[  !has_mirror_symmetry? NO_MIRROR : has_fixed_vertex ? MIRROR_WITH_FIXED_VERTEX :
   MIRROR_WITHOUT_FIXED_VERTEX] ++;
 @y
   int crossing_number = count_crossings(n);
@@ -192,7 +192,7 @@ num_crossings_on_level[p]=1; // counting the crossing with line 0
 while(num_crossings) { /* Main loop */
 
      int    p = crossings[--num_crossings];
-num_crossings_on_level[p]++;xE
+num_crossings_on_level[p]++;
 
 //    update the data structures to CARRY OUT the crossing
         int i = line_at[p];
