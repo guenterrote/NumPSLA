@@ -16,7 +16,7 @@ generates the C-program `NumPSLA.c`. The command
 cweave NumPSLA.w
 ```
 generates the LaTeX-file `NumPSLA.tex`.
-For convenience, the pdf-Version of this file is available as `NumPSLA-pdf.pdf`. `NumPSLA.w` needs another CWEB file, `readDataBase.w`, for inclusion.
+For convenience, the pdf-Version of this file is available as `NumPSLA-pdf.pdf`. `NumPSLA.w` includes another CWEB file, `readDataBase.w`.
 
 The program is called with the parameters
 ```
