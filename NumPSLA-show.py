@@ -88,20 +88,21 @@ if __name__ == "__main__":
     IPE = False
     import sys
     if len(sys.argv)>=2:
-        if sys.argv[1][0]=="-":
-            print(f"Usage: python3 {sys.argv[0]} [n [ -t targets-file ] | d3.d4.d5...dn ] [-ipe]")
+        if sys.argv[1][0]=="-" and sys.argv[1] != "-t":
+            print(f"Usage: python3 {sys.argv[0]} [n | -t targets-file | d3.d4.d5...dn ] [-ipe]")
             exit(0)
         if "." in sys.argv[1]:
             mode = "TARGET1"
             target = [int(x) for x in sys.argv[1].split(".")]
             n_max = len(target)+3
+        elif len(sys.argv)>=2 and sys.argv[1] == "-t":
+            mode = "TARGET*"
+            n_max = 999
+            targets_file = open(sys.argv[2],"r")
+            # the targets must appear in sorted order                
+            target = next_target()
         else:
             n_max = int(sys.argv[1])
-            if len(sys.argv)>=3 and sys.argv[2] == "-t":
-                mode = "TARGET*"
-                targets_file = open(sys.argv[3],"r")
-                # the targets must appear in sorted order                
-                target = next_target()
         IPE = sys.argv[-1]=="-ipe"
     assert n_max>=2
 
@@ -118,6 +119,8 @@ if __name__ == "__main__":
         pass
     if mode=="ENUMERATE":
         print (countPSLA[2:])
-  
+
+    if IPE:
+        print('Ipe-file "wire.ipe" written.')
     IPE_end() # finish and close ipe-file, in case it was used.
   

@@ -260,12 +260,12 @@ a PSLA.
 \begin{tabbing}
   \qquad\=\+
   $P_0=[1,2,3,4,5]$\qquad\qquad\=$\bar P_0=[-,0,1,2,3,4]$
-  \qquad\qquad\=%$B_0=[0,0,0,0,0]$ 
-  \\$P_1=[0,4,5,3,2]$\> $\bar P_1=[0,-,4,3,1,2]$ \>$B_1=[0,0,0,0,0]$ 
-  \\$P_2=[0,3,4,5,1]$\> $\bar P_2=[0,4,-,1,2,3]$ \>$B_2=[0,0,0,0,1]$  
-  \\$P_3=[0,2,4,5,1]$ \> $\bar P_3=[0,4,1,-,2,3]$ \>$B_3=[0,1,0,0,1]$ 
-  \\$P_4=[0,2,3,1,5]$\> $\bar P_4=[0,3,1,2,-,4]$ \>$B_4=[0,1,1,1,0]$ 
-  \\$P_5=[0,2,3,1,4]$\> $\bar P_5=[0,3,1,2,4,-]$ \>$B_5=[0,1,1,1,1]$  
+  \qquad\qquad\=%$T_0=[0,0,0,0,0]$ 
+  \\$P_1=[0,4,5,3,2]$\> $\bar P_1=[0,-,4,3,1,2]$ \>$T_1=[0,0,0,0,0]$ 
+  \\$P_2=[0,3,4,5,1]$\> $\bar P_2=[0,4,-,1,2,3]$ \>$T_2=[0,0,0,0,1]$  
+  \\$P_3=[0,2,4,5,1]$ \> $\bar P_3=[0,4,1,-,2,3]$ \>$T_3=[0,1,0,0,1]$ 
+  \\$P_4=[0,2,3,1,5]$\> $\bar P_4=[0,3,1,2,-,4]$ \>$T_4=[0,1,1,1,0]$ 
+  \\$P_5=[0,2,3,1,4]$\> $\bar P_5=[0,3,1,2,4,-]$ \>$T_5=[0,1,1,1,1]$  
 \end{tabbing}
 }
 The first row and the first column are determined.
@@ -278,9 +278,9 @@ crossing with $j$ occurs. The diagonal entries are irrelevant.
  The column indices in $\bar P$ range from $0$ to $n$;
 therefore we define the rows to have maximum length |MAXN+1|.
 
-The binary matrix $B$ is discussed in Section~\ref{binary-fingerprint}.
+The binary matrix $T$ is discussed in Section~\ref{binary-fingerprint}.
 It is defined in terms of the $P$-matrix by the rule
-$B_i[j]=1$ if $P_i[j]<i$.
+$T_i[j]=1$ if $P_i[j]<i$.
 
 @<Types...@>=
 typedef int P_matrix[MAXN+1][MAXN+1];
@@ -1101,25 +1101,35 @@ void print_pseudolines_compact(P_matrix *P,int n)
 \label{binary-fingerprint}
 
 A PSLA is uniquely determined
-by the $n\times n$ binary matrix $B$, which is
-%The entries$B_i[j]=1$ if $P_i[j]<i$.
+by the $n\times n$ binary matrix $T$, which is
+%The entries$T_i[j]=1$ if $P_i[j]<i$.
  defined in terms of the $P$-matrix by the rule
-$B_i[j]=1$ if $P_i[j]<i$.
+$T_i[j]=1$ if $P_i[j]<i$.
 An example is shown in Section~\ref{sec:matrices}.
-% binary arrays $B_1,\ldots,B_n$.
+% binary arrays $T_1,\ldots,T_n$.
 The fact that this is enough can be seen from the
 fact that this information is sufficient for
 drawing the wiring-diagram.
 It has been shown by Stefan Felsner, On the number of arrangements of pseudolines,
-\textit{Discrete \& Computational Geometry} \textbf{18} (1997), 257--267,
-see also Felsner, \textit{Geometric Graphs and Arrangements},
-Vieweg, 2004, Chapter~6.
+\textit{Discrete \& Computational Geometry} \textbf{18} (1997),
+257--267,
+doi:\href{https://doi.org/10.1007/PL00009318}{10.1007/PL00009318},
+Theorem 1.
+% There it is called T.
+See also Felsner, \textit{Geometric Graphs and Arrangements},
+Vieweg, 2004, Chapter~6, Theorem 6.6.
+% There (p.96) it is called (beta_1,...,beta_n) with entries beta^i_j.
+% Handbook, 2nd ed., (Goodman) Theorem 5.6.6,
+% Handbook, 3rd ed., (Felsner and Goodman) Theorem 5.6.3:
+% There it is called $t^i_j$
+% The lines are called $L_1,\ldots,L_n$
+
 (The so-called \emph{replace matrices} from that paper would offer even more savings.)
 
-The first column of $B$ is fixed.
-The first row $B_1$ and the last row $B_n$ is fixed, and they need not
+The first column of $T$ is fixed.
+The first row $T_1$ and the last row $T_n$ is fixed, and they need not
 be coded.
-Also, since row $B_i$ contains $i-1$ ones, we can omit the last entry
+Also, since row $T_i$ contains $i-1$ ones, we can omit the last entry
 per row, since it can be reconstructed from the remaining entries.
 Thus we encode the $(n-2)\times(n-2)$ array obtained
 removing the borders from the original $n\times n$ array.
@@ -2040,8 +2050,8 @@ can conveniently read and process it.
     char c = 'T'; /* total count */
       if (parts!=1 && n>split_level+1)
       c = 'P'; /* partial count */
-    for_int_from_to(k,0, n_max+1)
-    for_int_from_to(p,0, n_max+1)
+    for_int_from_to(k,0, n)
+    for_int_from_to(p,0, n)
     for_int_from_to(t,0, 2)
       if (classcount[n][k][p][t])
   fprintf(reportfile,
@@ -2245,7 +2255,7 @@ typedef large_matrix_entry large_Lambda_matrix[MAXN+1][MAXN+1][MAXN+1];
 @*1 \texorpdfstring{(``Small'') $\lambda$}{("Small") lambda}-matrices.
 
  Input: PSLA with $n$ lines $1\dts n$ plus line $0$ ``at $\infty$''.
-Output: ``small'' $\lambda$-matrix $B$ for AOT on $n+1$ points.
+Output: ``small'' $\lambda$-matrix |B| for AOT on $n+1$ points.
 Line at $\infty$ corresponds to point 0 on the convex hull.
 
 @d entry_small(A,i,j) (A)[i][j]
@@ -2302,7 +2312,7 @@ on the convex hull.
 @ Generating the $\Lambda$-matrix. Only for testing purposes.
 Assumes natural ordering. Assumes general position. Works by plucking
 points from the convex hull one by one. The input is a $\lambda$-matrix~$A$.
-The result is stored in~$B$.
+The result is stored in~|B|.
 
 @<Subrout...@>=
 
@@ -2370,13 +2380,34 @@ Computing |inverse_PSLA| one level before |max_n| costs almost nothing.
 % (Whatever that means!)
 \item
 The |succ| and |pred| arrays could be implemented as one-dimensional
-arrays. Need to check which is faster.
-% on computer at home slightly slower, maybe 1-2 %
+arrays.
+@q accessing them by |SUCC(i,j) == succ[(i)<<4 | (j)]|.  @>
+%Need to check which is faster.
+On some computers, 1d was
+clearly slower, by about 10\,\%. On others, there was only a small
+variation, less than the variation between runs of the same program.
 % see change file succ-1d.ch
+% on computer at home (clang) 1d is slightly slower, maybe 1-2 %
+
+% on computer compute04 (clang) no difference
+%1d: 24m32,996s
+%2d: 24m17,922
+
+% on computer semper (clang), 1d is slightly slower, maybe 1-2 %
+%1d: 22m57,968s
+%2d: 22m24,670s
+
+% on computer curta (clang), 2d seems faster (with one outlier)
+%2d: 11.384s  10.053s  9.531s  9.971s  9.860s
+%1d: 10.062s  10.285s  9.863s 10.367s 10.367s
+
+% on computer curta (gcc), 1d is definitely slower, maybe 10 %
+%2d:  9.621s  9.773s  9.974s
+%1d: 10.334s 11.473s 10.707s
+% 
 \end{enumerate}
 
-@d SUCC_ALTERNATE(i,j) succ[(i)<<4 | (j)]
-// A shift of 4 is sufficient for |MAXN+1==16|
+@d SUCC_ALTERNATE(i,j) succ[(i)<<4 | (j)] // A shift of 4 is sufficient for |MAXN+1==16|
 @q assert(1<<SHIFT >= MAXN+1); # if @>
 
 @

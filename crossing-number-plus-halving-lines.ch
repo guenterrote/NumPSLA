@@ -26,7 +26,7 @@ one of which (the |crossing_number|) can rise to high values
 (see |MAX_CROSSINGS| in Section~\ref{crossing-number}).
 Therefore, we reduce the maximum number |MAXN| of pseudolines from 15 to what we really need.
 
-@d MAXN 11 /* The maximum number of pseudolines for which the program will work. */
+@d MAXN 12 /* The maximum number of pseudolines for which the program will work. */
 @z
 
 @x
@@ -51,7 +51,18 @@ long long unsigned classcount[MAXN+2][MAXN+2][MAXN+2][3];
 long long unsigned classcount[MAXN+2][MAXN+2][MAXN+2][3]
 [MAX_HALVING_LINES+1]
 [MAX_CROSSINGS+1];
-int num_halving_lines; // global variable; this is not clean
+/* This is a huge array: If it were full it would take
+about 2 GBytes of main memory.
+But it is very sparsely filled. With the \texttt{gcc} compiler,
+the system reports less than
+30 MBytes of used storage, and often only 2 or 3 MBytes.
+This might just depend on the available memory for swapping.
+ With \texttt{clang} compiler, the observed memory usage was
+ also less than
+3 MBytes.
+Only in |@<Report stat...@>| is the full array scanned once.
+*/
+int num_halving_lines; // global variable; (This is not the cleanest way to do it.)
 
 @z
 
@@ -109,130 +120,124 @@ Problem-specific processing can be added here.
 
 What range of values should we anticipate for the number of halving-lines?
 By \url{https://oeis.org/A076523}, a set with
-$n=12$ points (the maximum that the program is set up
-to deal with), has at most 18 halving-lines.
+$n=12$ points %, (the maximum that the program is set up to deal with),
+has at most 18 halving-lines.
 According to  S. Bereg and M. Haghpanah,
 New algorithms and bounds for halving pseudolines,
 Discrete Applied Mathematics 319 (2022) 194--206, \url{https://doi.org/10.1016/j.dam.2021.05.029},
 Table 1 on p.~196,
 the number of halving lines-with for odd numbers $n$ of points
 are nearly $70\,\%$ higher than for the adjacent even values.
-I could not find the bounds for small odd $n$ in the literature.
+I could not find the bounds for small odd $n$ in the literature
+or on the internet.
 %With a bound of 50 we should be on the safe side.
 After running the program once with a larger safety margin,
 it was found that
 a set with $n=11$ points has at most 24 halving-lines.
 (The program checks if the bound is not violated.)
-@d MAX_HALVING_LINES 24
+With $n=13$ points and a bound 40 on the halving-lines we should be on the safe side.
+@d MAX_HALVING_LINES 40 // For $n=12$ point, |MAX_HALVING_LINES=24| would be sufficient.
 
 
 @d MAX_CROSSINGS (MAXN+1)*MAXN*(MAXN-1)*(MAXN-2)/24
  /* crossing-number goes up to $\binom n4$ for $n$ points */
 
-@ How to check for a crossing.
+@ Find the number of crossings on each level of the wiring diagram.
 
 This algorithm is like the program for drawing the wiring diagram,
 except that it does not draw anything.
 
+The wires run on $n$ \emph{tracks}, which are labeled from 1 to $n$
+from top to bottom.
 
 The program computes the number of crossings
 |num_crossings_on_level[p]|
 at
 each level |p| including the crossings with line 0.
-A crossing at level |p| is a crossings between
-consecutive tracks  |p| and $p+1$, $0\le p \le n-1$.
+A crossing at level |p| is a crossing between
+consecutive tracks  |p| and $p+1$, $1\le p \le n-1$.
 
-From this information, there is an easy formula to compute the crossing number
-of the complete graph $K_n$ when it is drawn on this point set,
+From this information,
+the crossing number
+of the complete graph $K_n$ when it is drawn on this point set
+can be computed by easy explicit formula,
 see Lov\'{a}sz, Vesztergombi, Wagner, and Welzl, \emph{Convex quadrilaterals and
   $k$-sets}, 
 DOI:\href{http://doi.org/10.1090/conm/342/06138}{10.1090/conm/342/06138}.
 
-@d CHECK_CROSSING(p) {{
-        int i = line_at[p];
-        int j = line_at[p+1];
- if (i<j && next_crossing[i]>i && next_crossing[j]<j
- && next_crossing[j]!=0) 
-    /* Line i wants to cross down and line j wants to cross up. */
-/*     (In this case, we must actually have |next_crossing[i]==j| and |next_crossing[j]==i|.) */
-         crossings[num_crossings++] = p;
-	 /* The value |p| indicates a crossing between tracks |p| and $p+1$. */
-}}
+In addition, the program stores the number of halving-lines
+in the global variable |num_halving_lines|. % (This is not the cleanest way to do it.)
 
 @<Subr...@>+=
 int count_crossings(int n)
 {
-	int next_crossing[MAXN+1];
 	int line_at[MAXN+1];
-	int num_crossings_on_level[MAXN-1];
-	int crossings[MAXN]; /* stack */
-	int num_crossings=0;
-
-/* Initialize */
- for_int_from_to(i, 1,n) {
-    next_crossing[i] = SUCC(i,0);
-    /* current crossing on each line;
-The first crossing with line 0 ``at $\infty$'' is not considered. */
-    line_at[i-1] = i;
-    /* which line is on the $p$-th track, $0\le p<n$.
- tracks are numbered $p=0\ldots n-1$ from top to bottom. */
+	int next_crossing[MAXN+1];
+	int num_crossings_on_level[MAXN+1];
+ for_int_from_to(i, 0,n) { /* Initialize: */
+   line_at[i] = i;
+    /* which line is on the $i$-th track, $1\le i\le n$.
+ Tracks are numbered $p=1\ldots n$ from top to bottom. */
+   next_crossing[i] = SUCC(i,0);
+    /* current crossing on each line; the first crossing with line 0 ``at $\infty$'' is counted separately: */
+   num_crossings_on_level[i]=1; // The initial value counts the crossing with line 0
 }
 
- for_int_from_to(p, 0,n-1)
-num_crossings_on_level[p]=1; // counting the crossing with line 0
+next_crossing[0] = 1; /* sentinel values to ensure that the loop breaks at $p=0$ */
+
+int p = n;
+while(true) { /* Main loop */
+/* Invariant throughout: The lines at levels $p+1,\ldots,n$ want to cross \emph{upwards} (or are finished.) */
+
+while ( next_crossing[p]<line_at[p]) p--; // |while p| wants to cross upwards
+if(p==0) break;
+do {
+ /* The line |i == line_at[p]| on track |p| wants to cross down and the line |j == line_at[p+1]|
+ on track |p+1| wants to cross up. 
+ (In this case, we must actually have |next_crossing[i]==j| and
+|next_crossing[j]==i|.) */
 @/
-
-/* maintain a stack |crossings| of available crossings.
- $p\in$ crossings means that tracks $p$ and $p+1$ are ready to cross */
- 
- for_int_from_to(p, 0,n-2) 
-	CHECK_CROSSING(p)@;@/
-
-
-while(num_crossings) { /* Main loop */
-
-     int    p = crossings[--num_crossings];
 num_crossings_on_level[p]++;
-
-//    update the data structures to CARRY OUT the crossing
+@#@t\hskip-2em @>//    update the data structures to CARRY OUT the crossing $p\leftrightarrow p+1$:
         int i = line_at[p];
         int j = line_at[p+1];
-        next_crossing[i] = SUCC(i,next_crossing[i]);
-        next_crossing[j] = SUCC(j,next_crossing[j]);
+	int temp = SUCC(i,next_crossing[p]);
+	next_crossing[p] = SUCC(j,next_crossing[p+1]);
+        next_crossing[p+1] = temp;
         line_at[p] = j;
         line_at[p+1] = i;
-
-// Look for new crossings:
-if(p>0)
-	CHECK_CROSSING(p-1)@;
-if(p<n-1)
-	CHECK_CROSSING(p+1)@;
-
+	@#
+	p++;
 }
-@/
-/* compute result */
+while( next_crossing[p]>line_at[p]);  // |while p| wants to cross downwards
+p-=2; // We need not check $p-1$, because this would be an immediate back-crossing at the same level.
+}
 
-
-int crossing_formula = -(n+1)*n*(n-1)/2;
-for_int_from_to(p,0,n-1)
-   crossing_formula += num_crossings_on_level[p]*(n-1-2*p)*(n-1-2*p);
-
-
-// global variable |num_halving_lines| is set.
+   @#@t\hskip-3em @>
+   // Number of halving-lines is stored in the global variable |num_halving_lines|:
 
 if (n%2) 
 /* |n| odd, number of points even: */
-   num_halving_lines = num_crossings_on_level[(n-1)/2];
+   num_halving_lines = num_crossings_on_level[(n+1)/2];
 else
 /* |n| even, number of points odd: */
    num_halving_lines = num_crossings_on_level[n/2]
-   +num_crossings_on_level[n/2-1];
+   +num_crossings_on_level[n/2+1];
+
+   @#@t\hskip-3em @>
+   /* compute crossing number according to the formula: */
+int crossing_formula = -(n+1)*n*(n-1)/2;
+
+for_int_from_to(p,1,n)
+   crossing_formula += num_crossings_on_level[p]*(n+1-2*p)*(n+1-2*p);
+
 
 
 
 @qprint_wiring_diagram(n); @>
 @qfor_int_from_to(p, 0,n-1) printf("%d ",num_crossings_on_level[p]);@>
 @qprintf("%d\n", crossing_formula);@>
+@qprintf("n=%d, %d %d\n", n, crossing_formula, num_halving_lines);@>
 
 return crossing_formula/4;
 
