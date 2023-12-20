@@ -44,7 +44,10 @@
 \newcommand{\jplusold}{j^+_{\mathrm{old}}}
 \newcommand{\kxright}{k_{\mathrm{right}}}
 \newcommand{\kxleft}{k_{\mathrm{left}}}
-\newcommand{\invP}{\bar P}
+\newcommand{\PaInverse}{\bar P}
+
+%\def\9#1{}
+%q with this definition of \9 you can say @@:sort key}{TeX code@@> 
 
 \noindent{\small\today\ at \hours}
 
@@ -183,7 +186,7 @@ The last column counts the objects that the program actually
 enumerates
 one by one  (almost, because we try to apply shortcuts). These numbers are known up to $n=16$.
 For example, to get the 158,830 AOTs with 9 points, we go through all
-1{,}232{,}944 xPSLAs with 8 pseudolines, and select a subset by
+1{,}232{,}944 PSLAs with 8 pseudolines, and select a subset by
 a lexicographic comparison, see Sections~\ref{sec:lex-min}
 and~\ref{test-lex-min}.
 
@@ -205,7 +208,7 @@ simple {projective} pseudoline arrangements with a marked cell.
 %\href{https://oeis.org/A006246}{A006246},
 %\href{https://oeis.org/A006248}{A006248}. NO LONGER CURRENT.
 
-@* Representations of pseudoline arrangements.
+@* Representation of a pseudoline arrangement.
 
 Here is an $x$-monotone
 pseudoline arrangement with $n=5$ pseudolines,
@@ -246,6 +249,14 @@ intersects all other pseudolines from top to bottom at the very left
 and again intersects all pseudolines from bottom to top at the very
 right.
 
+As a projective PSLA, the top face would be enclose by an edge that
+closes line 0 into a closed loop, from the intersection with 5 to the
+intersection with 0 (not shown in the picture).
+We consider this edge as the \emph{starting edge} of this
+representation.
+In Section~\ref{different-starting-edge} we will consider the choice
+of a different starting edge in the same projective class of PSLAs.
+
 @*1 The \texorpdfstring{$P$}{P}-matrix (local sequences matrix) and its inverse.
 \label{sec:matrices}
 Here is a representation of the right example as a two-dimensional array, indicating for
@@ -270,7 +281,7 @@ a PSLA.
 }
 The first row and the first column are determined.
 Each row has $n$ elements. 
-We also use the data structure for an
+We also use an
 inverse array $\bar P$, which is essentially the inverse permutation
 of each row.
 The $j$-th element of $\bar P_i$ gives the position in $P_i$ where the
@@ -290,6 +301,8 @@ typedef int P_matrix[MAXN+1][MAXN+1];
 For modifying and extending PSLAs, it is best to work with a linked
 representation.
 
+We will occasionally denote to the crossing point between two lines $k$ and $j$
+by $k\times j$ or $j\times k$.
 Point $(j,k)$ describes the crossing with line $k$ along the line $j$.
 |SUCC(j,k)| and |PRED(j,k)| point to the next and previous crossing on line $j$.
 For $(k,j)$ we get the corresponding information for the line $k$.
@@ -519,6 +532,7 @@ else
 
 
 @* Recursive Enumeration.
+\label{recursive-enumeration}
 
 We extend an $x$-monotone pseudoline arrangement
  of $n-1$ lines $1,\dts, n-1$, 
@@ -805,7 +819,7 @@ void convert_to_P_matrix(P_matrix *P, int n)
 @*1 Convert from linked list to inverse \texorpdfstring{$P$}{P}-matrix.
 
 The inverse $P$-matrix matrix %$\bar P=I=$
-|invP| gives the following information:
+|PaInverse| gives the following information:
 $\bar P_{jk}=p$ if
 the intersection between line $j$ and line $k$ is
 the $p$-th intersection on line $j$ ($p=0,\dts,n-1$).
@@ -814,26 +828,26 @@ arrangement, and about the dual point set,
 see Section~\ref{sec:orientation}.
 
 \iffalse
-void compute_inverse_P_matrix(P_matrix *P,P_matrix *invP,int n)
+void compute_inverse_P_matrix(P_matrix *P,P_matrix *PaInverse,int n)
 {
   for_int_from_to(i, 0, n) 
     for_int_from_to(p, 0, n-1) 
-    (*invP)[i][(*P)[i][p]] = p;
+    (*PaInverse)[i][(*P)[i][p]] = p;
 }
 \fi
 
-@s invP TeX
+@s PaInverse TeX
 
 @<Subr...@>=
 
-void convert_to_inverse_P_matrix(P_matrix *invP, int n)
+void convert_to_inverse_P_matrix(P_matrix *PaInverse, int n)
 {
   int j = 1;
   for_int_from_to(i,0,n)
   { 
     for_int_from_to(p,0,n-1 )
     {
-      (*invP)[i][j]=p;
+      (*PaInverse)[i][j]=p;
       j = SUCC(i,j);
     }
     j = 0; // j starts at 0 except for the very first line.
@@ -845,7 +859,7 @@ void convert_to_inverse_P_matrix(P_matrix *invP, int n)
 \label{sec:orientation}
 
 %Instead of storing $O(n^3)$ values, we formulate a macro that
-We compute the orientation predicate in constant time from the inverse permutation array |invP|.
+We compute the orientation predicate in constant time from the inverse permutation array |PaInverse|.
 It is a |boolean| predicate that returns |true| if the points $i,j,k$
 are in counterclockwise order. It works only when the three indices are distinct.
 
@@ -872,16 +886,16 @@ all 3! possibilities in which the indices $i,j,k$ can be ordered.
 \end{figure}
 
 
-@d getOrientation_explicit(invP, i, j, k) (
-i<j && j<k ? invP[i][j]>invP[i][k] : 
-i<k && k<j ? invP[i][j]>invP[i][k] : 
-j<i && i<k ? invP[i][j]<invP[i][k] : @|@t\hskip -2em\phantom(@>
-j<k && k<i ? invP[i][j]>invP[i][k] : 
-k<j && j<i ? invP[i][j]>invP[i][k] : 
-k<i && i<j ? invP[i][j]<invP[i][k] : 
+@d getOrientation_explicit(PaInverse, i, j, k) (
+i<j && j<k ? PaInverse[i][j]>PaInverse[i][k] : 
+i<k && k<j ? PaInverse[i][j]>PaInverse[i][k] : 
+j<i && i<k ? PaInverse[i][j]<PaInverse[i][k] : @|@t\hskip -2em\phantom(@>
+j<k && k<i ? PaInverse[i][j]>PaInverse[i][k] : 
+k<j && j<i ? PaInverse[i][j]>PaInverse[i][k] : 
+k<i && i<j ? PaInverse[i][j]<PaInverse[i][k] : 
 0)
 
-@d getOrientation(invP, i, j, k) ((i<j) ^ (j<k) ^ (invP[j][i]>invP[j][k]))
+@d getOrientation(PaInverse, i, j, k) ((i<j) ^ (j<k) ^ (PaInverse[j][i]>PaInverse[j][k]))
 
 
 
@@ -982,71 +996,65 @@ columnwise from left to right.
 @d TO_CHAR(i) ((char) (
 		       (i<10? (int)'0' : ((int)'A' - 10))
 		       + i))
-
+// lines $>9$ are codes as letters
 @<Subr...@>=
 
 
 void print_wiring_diagram(int n)
 { // ASCII, horizontal, column-wise
   int next_crossing[MAXN+1]; // current crossing on each line
-  int line_at[MAXN+1]; // which line is on the $i$-th track
-  boolean crossing[MAXN]; /* is there a crossing between track $i$ and
-  $i+1$ */
+  int line_at[MAXN]; // which line is on the $i$-th track, $i=0,\ldots,n-1$
+  boolean crossing[MAXN-1]; /* Is there a crossing between track $i$ and
+  $i+1$? */
 
-  char buffer[2*MAXN][MAXN*MAXN];
+  char buffer_line[2*MAXN-1][MAXN*MAXN]; /* enough columns for 2 characters
+  per crossing plus a little extra */
   
   for_int_from_to(j,0,n-1) {
+    line_at[j]=j+1;
     next_crossing[j+1]=SUCC(j+1,0);
     /* crossing $\#0$ with line 0 ``at $\infty$'' is not considered. */
-    line_at[j]=j+1;
   }
-  crossing[n-1] = false;
-  int n_crossings = 0;
+  int num_crossings = 0;
   int column = 0;
   
-  for_int_from_to(p,0,2*n-1) buffer[p][column]=' ';
-   @+   column++;//empty column
-  while(true)
+  for_int_from_to(p,0,2*n-2) buffer_line[p][column]=' ';//empty start column
+  for(column=1;;column++)
     {
+    for_int_from_to(p,0,n-1)
+       buffer_line[2*p][column]=TO_CHAR(line_at[p]);
+    for_int_from_to(p,0,n-2) 
+       buffer_line[2*p+1][column]=' ';
+   
+        
+    column++;
+    @#@t\hskip-2em @>
     /* find where crossings occur, set boolean array |crossing|$[0\dts
     n-2]$ accordingly. */
-    boolean something_done = false;
+    boolean something_to_do = false;
     for_int_from_to(p, 0,n-2)
       {
 	int i = line_at[p];
 	int j = line_at[p+1];
 	crossing[p] =next_crossing[i]==j && next_crossing[j]==i;
-	if (crossing[p])
-	  {
-	    something_done = true;
-	    n_crossings++;
-	  }
-        }
-    for_int_from_to(p,0,n-1) {
-    buffer[2*p][column]=TO_CHAR(line_at[p]);
-    buffer[2*p+1][column]=' ';
-    }
-        
-    column++;
-    if (!something_done) break;
-    for_int_from_to(p,0,n-1){
-      buffer[2*p][column]='-';
-      buffer[2*p+1][column]=' ';
-    }
-    for_int_from_to(p,0,n-2)
-      {
-	if (crossing[p])
-	  {       // print the crossing as an |'X'|
-	    buffer[2*p][column]=
-	    buffer[2*p+2][column]=' '; // erase the adjacent lines
-	    buffer[2*p+1][column]='X';
-	  }
-      }
-    column++;
-    for_int_from_to(p, 0,n-2)
-      {       // carry out the crossings
 	if(crossing[p])
-	  {
+	    something_to_do = true;
+        }
+    if (!something_to_do) break;
+    for_int_from_to(p,0,n-1)
+      buffer_line[2*p][column]='-'; // continuation column
+
+    
+    for_int_from_to(p,0,n-2)      
+	if (crossing[p]) {      
+	    num_crossings++; @#
+	    buffer_line[2*p+1][column]='X'; // print the crossing as an |'X'|
+	    buffer_line[2*p][column]=
+	    buffer_line[2*p+2][column]=' '; // erase the adjacent lines
+	 
+          @#@t\hskip-2em @>
+       // carry out the crossing:
+	  
 	    int i = line_at[p];
 	    int j = line_at[p+1];
 	    next_crossing[i] = SUCC(i,next_crossing[i]);
@@ -1054,13 +1062,13 @@ void print_wiring_diagram(int n)
 	    line_at[p] = j;
 	    line_at[p+1] = i;
 	  }
-      }
+else       buffer_line[2*p+1][column]=' ';     
     }
   for_int_from_to(p,0,2*n-2) {
-    buffer[p][column]=0; // finish the lines
-    printf("%s\n",buffer[p]); // and print them
+    buffer_line[p][column]=0; // finish the lines
+    printf("%s\n",buffer_line[p]); // and print them
   }
-  assert(n_crossings*2 == n*(n-1));
+  assert(num_crossings == n*(n-1)/2);
 }
 
 @*1 Fingerprints.
@@ -1070,7 +1078,7 @@ prefixed by the letter \texttt{P} and
 with the rows separated by \texttt{!} symbols.
 The procedure |print_pseudolines_compact| prints a more compact
 version that leaves out redundant parts, which are the same in all
-$P$-matrices or which can be easily inferred from the reamining
+$P$-matrices or which can be easily inferred from the remaining
 information.
 
 @<Subr...@>=
@@ -1088,10 +1096,10 @@ void print_pseudolines_short(P_matrix *P,int n)
 }
 
 void print_pseudolines_compact(P_matrix *P,int n)
-{ // line 0 is always 1234$\dts$
+{
   for_int_from_to(i, 1,n)
-  { // line $P_i$ starts with 0 and is a permutation that misses $i$.
-    if (i>1) printf("!");
+  {  // line 0 is always 1234$\dts$
+    if (i>1) printf("!"); // line $P_i$ starts with 0 and is a permutation that misses $i$.
     for_int_from_to(j, 1,n-2)
        printf("%c",TO_CHAR((*P)[i][j]));
   }
@@ -1116,7 +1124,7 @@ It has been shown by Stefan Felsner, On the number of arrangements of pseudoline
 doi:\href{https://doi.org/10.1007/PL00009318}{10.1007/PL00009318},
 Theorem 1.
 % There it is called T.
-See also Felsner, \textit{Geometric Graphs and Arrangements},
+See also Stefan Felsner, \textit{Geometric Graphs and Arrangements},
 Vieweg, 2004, Chapter~6, Theorem 6.6.
 % There (p.96) it is called (beta_1,...,beta_n) with entries beta^i_j.
 % Handbook, 2nd ed., (Goodman) Theorem 5.6.6,
@@ -1206,7 +1214,9 @@ compute_fingerprint(&P,n);
 
 @* Enumerating abstract order types.
 
-@*1 Compute the \texorpdfstring{$P$}{P}-matrix for a different starting edge.
+@*1 Compute the \texorpdfstring{$P$}{P}-matrix for a different
+starting edge.
+\label{different-starting-edge}
 
 For reference we show how to compute the matrix from an arbitrary
 \emph{starting edge}.
@@ -1224,6 +1234,9 @@ and
 in the direction of the |pred|-pointers if
 |reversed==true|.
 The $P$-matrix is filled row-wise from right to left.
+
+The stardard, unchanged, setting would be obtained with |line0==0| and
+|right_vertex==1|.
 
 
 The main application of this procedure is when we try out different
@@ -1264,7 +1277,8 @@ $j$. */
    { // compute row $P_p$ of $P$-matrix
        int pos= reversed ? n+1-p : p;
        (*P)[p][0]= 0;
-       int i = Sequence[pos];
+       int i = Sequence[pos]; /* Alternatively, $i$ could be set
+       via |PRED| or |SUCC|. */
        int j = line0;
        @/
        /* We fill row $P_p$ from right to left. The reason for this
@@ -1297,9 +1311,9 @@ In the lexicographic comparison between PSLAs, we consider the
 elements of the $P$-matrix row-wise \emph{from right to left},
 i.e., in the order
 $P_{1n}, P_{1,n-1}, \ldots,P_{11};
-P_{2n}, P_{2,n-1}, \ldots,P_{21}; \ldots$,
-assuming that the entries in each row are numbered from 1 to~$n$
-(unlike in the \textsc{C} program).
+P_{2n}, P_{2,n-1}, \ldots,P_{21}; \ldots$.
+Here we number the entries in each row from 1 to~$n$,
+unlike in the \textsc{C} program.
 In comparison with the
 more natural left-to-right order, this gives, experimentally, a
 quicker way to eliminate tentative $P$-matrices than the 
@@ -1355,7 +1369,7 @@ int *hulledges, int hullsize, boolean compute_all)
 @*1 Compute the lex-smallest representation.
 
 The input is taken from the global |succ| and |pred| arrays.
-The function assumes that |hulledges| and |hullsize| have been
+The function assumes that |hulledges| and $h=|hullsize|$ have been
 computed.
 
 
@@ -1368,10 +1382,10 @@ These output parameters --- |rotation_period|,
 |has_mirror_symmetry|, and
 |has_fixed_vertex| ---
 are determined on the way as a side result.
-|has_fixed_vertex| is only set if the PSLA is mirror-symmetric.
+The parameter |has_fixed_vertex| is only set if the PSLA is mirror-symmetric.
 
 We scan the entries of $P$ row-wise from right to left.
-We maintain a list of solutions, which are still
+We maintain the list of solutions that are still
 \emph{candidates} to be lex-smallest.
 Initially we have $2\times{}$|hullsize| candidates,
 |hullsize| ``forward'' candidates and the same number of
@@ -1622,7 +1636,7 @@ $P_{p,n-q}$ in the matrix $P^0$.
     *rotation_period = candidate[0];
   else
     *rotation_period =  hullsize;
-  *has_mirror_symmetry = (numcandidates>numcandidates_forward);
+  *has_mirror_symmetry = numcandidates>numcandidates_forward;
    if (*has_mirror_symmetry) {
      int symmetric_shift = candidate[numcandidates_forward];
      /* There is a mirror symmetry that maps vertex 0 to this hull vertex. */
@@ -1638,7 +1652,7 @@ line 1. We can still determine the upper right corner $P_{1n}$ of the
 $P$-matrix, as follows (see  Figure~\ref{fig:def-Q}b).
 
 We find |iprime = PRED(0,1)|; This is line $n$.
-The |PRED(iprime,0)| would represent the last intersection on line
+Then |PRED(iprime,0)| would represent the last intersection on line
 $n$, which is the value of  $P_{1n}$ that we want, except that we
 don't have the correct label. We can recover this label by walking
 along line $0$, using the |SUCC| labels, until we hit line |iprime|.
@@ -1663,7 +1677,8 @@ Then $Q(i,j)$ is the number of visited points on $i$, including the
 endpoints.
 This convention ensures that $Q(i,j)$ is the value $P_{1n}$ when line
 $i$ is chosen to play the role of line $0$, (and $j$ will become line~1).
-In the walk along $i$, we may cross line $0$ and wrap around to the
+In the walk along $i$, it may happen that we cross line $0$ and wrap
+around from the right end to the
 left end.
 
 
@@ -1699,35 +1714,67 @@ bottom right of the wiring diagram,
  where line 0 is where it should be.
 Similarly, for $(i,j)=(n,0)$, we have to look at the bottom left corner.
 
-...
+%...
 
-Our primary criterion in comparing candidates is $P_{1n}$ which is
+Our primary criterion in the lexicographic comparison is $P_{1n}$. This is
 given by $Q(i,j)$ and $\bar Q(i,j)$ for the pairs $(i,j)$ of
-consecutive edges on the upper envelope. This has to be compared against.
+consecutive edges on the upper envelope. This has to be compared
+against
+the current value of  $P_{1n}$, which is
 $Q(0,1)$.
 
 
-@ Screen candidates by comparing the leading entry $P_{1n}$,
+@ Screen candidates by comparing the leading entry $P_{1n}$.
  
 Compute the leading entry $P_{1n}$ for all candidates directly,
 without first computing the |label_arrays|.  The |label_arrays| are
-computed afterwards (if at all), and only those that are still
-necessary.  This saves about 20\,\% of the runtime for enumerating
-AOTs.  If $P_{1n}=2$ for line 0, the screening has no effect, but
+computed afterwards (if at all), and only those that are
+not yet eliminated.
+
+Each of the $h$ hull edges can be used as a starting edge in the
+forward direction or in the backward direction. This gives rise to
+$h$ forward candidates, whose corresponding value $P_{1n}$ is computed
+in the array |P_1_n_forward[r]| for $r=0,\ldots, h-1$,
+and
+$h$ backward candidates, for which
+the array |P_1_n_backward| is used.
+The value $P_{1n}$ for the current solution, whose lex-minimality we
+are checking,
+is in |P_1_n_forward[0]|.
+If any other candidate has a smaller value 
+|P_1_n_forward[r]| or
+ |P_1_n_backward[r]| than this, we can immediately abandon the current solution
+and |return false|.
+
+This cannot occur if $P_{1n}=2$ for line 0, but
 otherwise there is a high chance for finding a smaller value $P_{1n}$
 for some of the other candidates.
-
 [ Observation. The relative frequence of $P_{1n}$ over all PSLAs is
 about 26\,\% for 2 and $n$, about 11\,\% for 3 and $n-1$ and decreases
 towards the middle values. The symmetry can be explained as follows.
-An xPSLA is essentially a projective oriented PSLA with a marked angle. Going to
+A PSLA is essentially a projective oriented PSLA with a marked angle. Going to
 an adjacent angle and mirroring the PSLA exchanges $a$ with $n+2-a$. ]
 
-The following program treats each forward candidate $i$ together with
-the corresponding mirror candidate~$j$.
-it uses the condition $Q(i,j)=2 \iff\bar Q(i,j)=2$ to shortcut the
+If any candidate has a value 
+|P_1_n_forward[r]| or
+|P_1_n_backward[r]|
+larger than |P_1_n_forward[0]|, that candidate can be excluded from
+further consideration.
+
+This screening procedure saves about 20\,\% of the runtime for enumerating
+AOTs.
+
+
+The following program
+%treats each forward candidate $i$ together with
+%the corresponding mirror candidate~$j$.
+%it
+uses the condition $Q(i,j)=2 \iff\bar Q(i,j)=2$ to shortcut the
 computation.
-(not sure if it brings any advantage.)
+(Not sure if it brings any advantage, because
+computing $\bar Q(i,j)$ would also be fast in this case.)
+
+
 
  For example
  there are
@@ -1764,7 +1811,9 @@ P_1_n_forward[0]= PRED(1,0); /* because |hulledges[1]==1| */
       }
       if (a<P_1_n_forward[0]) return false;
       P_1_n_forward[r] = a;
-    /* This may not be the precise value if |a>P_1_n_forward[0]| */
+    /* This may not be the precise value if |a>P_1_n_forward[0]|, but
+    it
+    is sufficient to exclude candidate $r$. */
     }
 @#
   for_int_from_to(r,0,hullsize-1)
@@ -1796,15 +1845,18 @@ $Q(i,j)$ and $\bar Q(i,j)$ are both 2.
 }
 
 
-@*1 More aggressive screening at the previous level.
+@*1 More aggressive screening at the next-to-last level
+\texorpdfstring{$n-1$}{n-1}.
 
-Rather than generating many PSLAs with $n$ lines and
- eliminating them by screening,
- it is better not to generate them at all, or to generate only those
- that
- have a change of surviving the screening test.
 
-To do this, we apply a test at the previous level.
+ We apply a test at level $n-1$, before the $n$-th pseudoline
+is inserted.
+ If we find out that none of the PSLAs obtained by adding line
+ $n$ has a change of surviving the screening test,
+we can save a lot of time by not generating these PSLAs at all
+(rather than generating many PSLAs with $n$ lines and
+ eliminating them by screening).
+
 
 When adding a new line $n$, the quantities $Q(i,j)$ can change in a
 few ways.
@@ -1862,10 +1914,18 @@ $\bar Q(1,0)$ can still increase by at most 1. Thus
  not able to produce a lex-min AOT in the next generation.
  The remaining  89,995,149 PSLAs produce 
  15,409,623,219 offspring PSLAs
- with $n=10$ lines.
+ with $n=10$ lines,
  as opposed to 18,410,581,880 without this pruning procedure.
  These remaining PSLAs are subject to the screening as before.
 
+ This test takes only $O(n)$ time. It would make sense to run
+ further pre-screening tests, even if they take much longer. We are running this
+ test on level $n-1$. If a test can exclude the generation of hundreds
+ of successor configurations, it is worth while.
+ I have formulated some more
+ powerful other tests, but have not implemented them, because they are
+ getting more and more delicate.
+ 
  @
 @<Screen one level below...@>=
 int P_1_n = PRED(1,0);
@@ -1901,11 +1961,19 @@ Characteristics:
 \item mirror symmetry, with or without fixed vertex on the hull (3 possibilities).
 \end{itemize}
 
-|PSLAcount| counts OAOT of point sets with a marked point on the
+|U_PSLAcount| counts OAOT of point sets with a marked point on the
 convex hull,
-but no specified traversal direction.
-http://oeis.org/A006245 (see below) is the same sequence with $n$ shifted by 0.
-|xPSLAcount| counts OAOT of point sets with a marked point on the ... ?
+but no specified traversal direction. (|U| stands for unoriented.)
+Equivalently, it counts the $x$-monotone PSLAs when a PSLA is
+identified with its left-right mirror.
+
+|PSLAcount| counts OAOT of point sets with a marked point on the
+convex hull and a specified traversal direction.
+Equivalently, it counts the $x$-monotone PSLAs, see
+\url{http://oeis.org/A006245}.
+%Also the number of oriented matroids of rank 3 on $n$(?) elements. */
+This gives always the correct number, even if the program does not
+visit all these PSLAs due to the pre-screening.
 
 @d NO_MIRROR 0
 @d MIRROR_WITH_FIXED_VERTEX 1
@@ -1916,11 +1984,12 @@ http://oeis.org/A006245 (see below) is the same sequence with $n$ shifted by 0.
   long long unsigned countPSLA[MAXN+2], countO[MAXN+2], countU[MAXN+2];
   
 long long unsigned PSLAcount[MAXN+2];
-/*A006245, Number of primitive sorting networks on $n$ elements; also number of rhombic tilings of $2n$-gon.
-Also the number of oriented matroids of rank 3 on $n$(?) elements. */
+/*A006245, Number of primitive sorting networks on $n$ elements; also
+number of rhombic tilings of $2n$-gon. */
+
 /* 1, 1, 2, 8, 62, 908, 24698, 1232944, 112018190, 18410581880, 5449192389984
 $\ldots$ until $n=16$. */
-long long unsigned xPSLAcount[MAXN+2];
+long long unsigned U_PSLAcount[MAXN+2];
 long long unsigned classcount[MAXN+2][MAXN+2][MAXN+2][3];
 
 
@@ -1937,7 +2006,7 @@ numComparisons=0, numTests=0; // profiling
 countO[3]=
 countU[3]=
 PSLAcount[2]=
-xPSLAcount[2]=
+U_PSLAcount[2]=
 1;
 // All other counters are automatically initialized to 0.
   if (strlen(fname)) {
@@ -1968,23 +2037,23 @@ if(lex_smallest)
   @/
   /* We count to contribution from this AOT to the various
   counters
-  |countO|, |PSLAcount|, |xPSLAcount|
+  |countO|, |PSLAcount|, |U_PSLAcount|
   according to the symmetry information. */
   if (has_mirror_symmetry)
   {
     countO[n_points]++;
     PSLAcount[n]+=rotation_period;
      if(has_fixed_vertex)
-        xPSLAcount[n]+=rotation_period/2+1;
+        U_PSLAcount[n]+=rotation_period/2+1;
 	// works for even and odd |rotation_period|
    else
-      xPSLAcount[n]+=rotation_period/2;
+      U_PSLAcount[n]+=rotation_period/2;
   }
   else
   {
     countO[n_points]+=2;
     PSLAcount[n]+=2*rotation_period;
-    xPSLAcount[n]+=rotation_period;
+    U_PSLAcount[n]+=rotation_period;
   }
 
   classcount[n_points][hullsize][rotation_period]
@@ -2014,7 +2083,7 @@ for_int_from_to(n,3,n_max+1) {
   countU[n], 
 countO[n], symmetric
   );
-  printf("#PSLA=%11Ld, #xPSLA=%10Ld", PSLAcount[n], xPSLAcount[n]);
+  printf("#PSLA=%11Ld, #uPSLA=%10Ld", PSLAcount[n], U_PSLAcount[n]);
 #endif
   printf("\n");
 
@@ -2067,6 +2136,43 @@ fclose(reportfile);
     printf("Results have been written to file %s.\n", fname);
   }
 
+  @*1 Mirror symmetries of PSLAs.
+
+  For $n=6$, there are 908 PSLAs (as accumulated in 
+  |PSLAcount[6]|), but only
+  461 unoriented PSLAs (``uPSLAs''),  as accumulated in 
+  |U_PSLAcount[6]|.
+
+  From this we conclude that
+  among the 908 PSLAs, there must be 14 PSLAs that have a
+vertical symmetry axis, and the remaining 894 come in 447
+mirror-symmetric pairs, because
+$2\times 447 + 14 = 908$ and
+$447 + 14 = 461$.
+
+We also know that there must be the same number, 14, of PSLAs with a
+horizontal symmetry axis, because $n$ is even, and an appropriate
+rotation swaps the directions. A PSLA cannot have both a vertical and
+a horizontal symmetry axis, because then it would allow
+% be symmetric with respect to
+a $180^\circ$ rotation, and this is impossible: Consider the
+cross formed by lines 1 and $n$. The crossing of lines 2 and $n-1$ is
+in one of the four sectors of this cross, and after rotation, it is in
+the opposite sector.
+
+Similarly, for $n=7$, the 
+24698 PSLAs split into 12270 pairs without mirror symmetry and 158
+symmetric ones, since $2\times 12270 + 158 =24698$
+and $ 12270 + 158 =12428$, which is the number of uPSLAs.
+In this case, there are no PSLAs with a horizontal symmetry axis,
+because
+$n$ is odd: The ``middle'' line must pass either above or below the
+crossing $1\times n$, and this property is inverted by a reflection at a
+horizontal axis.
+
+A consequence of these considerations is that the number of PSLAs is
+always even, because they can be grouped into pairs that are either
+vertically symmetric or horizontally symmetric.
 
 @* Special problem-specific extensions.
 
@@ -2085,8 +2191,8 @@ in the |succ| and |pred| arrays
 
 $P$-matrix is / is not available.
 
-@*1 Further exlusion criteria.
-\label{further-exlusion-criteria}
+@*1 Further exclusion criteria.
+\label{further-exclusion-criteria}
 
 If some PSLAs or AOTs and their subtrees should not be considered,
 they can be filtered here, by setting |is_excluded| to |false|.
@@ -2124,8 +2230,8 @@ explicitly computed three-dimensional $\Lambda$-matrix
 @<Further processing...@>=
 
 #if 0
-P_matrix invP; // the orientation test is computed from this array.
-convert_to_inverse_P_matrix(&invP,n);
+P_matrix PaInverse; // the orientation test is computed from this array.
+convert_to_inverse_P_matrix(&PaInverse,n);
 @#
 small_lambda_matrix S;
 convert_to_small_lambda_matrix(&S, n_points);
@@ -2143,10 +2249,10 @@ convert_small_to_large(&S, &L, n_points);
   if (i!=j)
   for_int_from_to(k,0,n-1)
   if (k!=j && k!=i)
-  if(getOrientation(invP,i,j,k) != L[i][j][k]) {
+  if(getOrientation(PaInverse,i,j,k) != L[i][j][k]) {
     @qprint_small(S, n_points);@>
   printf ("[%d,%d,%d]=%d!=%d\n", i,j,k,
-  getOrientation(invP,i,j,k), L[i][j][k]);
+  getOrientation(PaInverse,i,j,k), L[i][j][k]);
   exit(1);
   }
   ;
@@ -2157,12 +2263,12 @@ convert_small_to_large(&S, &L, n_points);
 @ Print ``some'' example.
 @<Further processing...@>=
 #if 0
-if(n==n_max && countPSLA[n]==50) { // print ``some'' example
-  P_matrix PP,invPP;
-  convert_to_P_matrix(&PP,n);
-  convert_to_inverse_P_matrix(&invPP,n);
-  print_pseudolines_short(&PP,n);
-  printf("inverse ");  print_pseudolines_short(&invPP,n+1);
+if(n==n_max && countPSLA[n]==50) { // print some arbitrary example
+  P_matrix P,PaInverse;
+  convert_to_P_matrix(&P,n);
+  convert_to_inverse_P_matrix(&PaInverse,n);
+  print_pseudolines_short(&P,n);
+  printf("inverse ");  print_pseudolines_short(&PaInverse,n+1);
   print_wiring_diagram(n);
   }
 #endif
@@ -2234,7 +2340,7 @@ and \texorpdfstring{$\Lambda$}{Lambda}-matrices.
 @s small_int int
 @s  small_matrix_entry int
 @s  large_matrix_entry int
-% ought to be done automatically
+@q ought to be done automatically @>
 
 @<Types and data...@>=
 
@@ -2297,22 +2403,24 @@ void convert_to_small_lambda_matrix(small_lambda_matrix *B, int n)
 
 The three-dimensional $\Lambda$-matrix stores the orientation of all triples.
 
-In this program, entries $\Lambda_{ijk}$ % of the large matrix
-are only
-ever accessed for $i<j<k$.
 It would be possible to save space by a more elaborate indexing
-function into a one-dimensional array. 
+function into a one-dimensional array,
+storing entries $\Lambda_{ijk}$ % of the large matrix
+ only
+ for $i<j<k$.
 More general access could then be provided by a macro
-|get_entry_large|.
+|get_entry_Lambda|.
 
- Natural labeling around the |pivot| point, which is assumed to lie
+We have the
+ natural labeling around the |pivot| point, which is assumed to lie
 on the convex hull.
 
 
-@ Generating the $\Lambda$-matrix. Only for testing purposes.
+@ Generate the $\Lambda$-matrix. Only for testing purposes.
 Assumes natural ordering. Assumes general position. Works by plucking
 points from the convex hull one by one. The input is a $\lambda$-matrix~$A$.
-The result is stored in~|B|.
+The result is stored in~|B|. The entries $\Lambda_{ijk}$ are not set
+if the indices $i,j,k$ are not distinct.
 
 @<Subrout...@>=
 
@@ -2333,12 +2441,12 @@ int n)
             for_int_from_to(j,i+1, n-1)  // $k<i<j$ 
             {
               boolean plus = entry_small(Temp,i,k)<entry_small(Temp,j,k);
+              (*B)[k][i][j]=(*B)[i][j][k]=(*B)[j][k][i]= plus;
+              (*B)[k][j][i]=(*B)[i][k][j]=(*B)[j][i][k]= !plus;
               if (plus)
                 entry_small(Temp,i,j)--;
               else
                 entry_small(Temp,j,i)--;
-              (*B)[k][i][j]=(*B)[i][j][k]=(*B)[j][k][i]= plus;
-              (*B)[k][j][i]=(*B)[i][k][j]=(*B)[j][i][k]= !plus;
             }
 }
 
@@ -2368,20 +2476,22 @@ the parallelization through
 \item Better drawings of PSLAs.
 \item Selective exploration of subtrees. Goal-directed search for
   particular examples. Can be implemented by definining
-  further exlusion criteria,
-  see Section~\ref{further-exlusion-criteria}.
+  further exclusion criteria,
+  see Section~\ref{further-exclusion-criteria}.
 \item \emph{Entropy encoding} of PSLAs?
 %Streamline the \texttt{screening} program.
 \item 
 Using inverse-PSLA makes
 \emph{screening} slower!
-It is only good if combined with screening one level before!
+It might however be good in the context of screening one level before the last!
 Computing |inverse_PSLA| one level before |max_n| costs almost nothing.
 % (Whatever that means!)
+% Maybe for the more advances prescreening
 \item
 The |succ| and |pred| arrays could be implemented as one-dimensional
-arrays.
-@q accessing them by |SUCC(i,j) == succ[(i)<<4 | (j)]|.  @>
+arrays,
+accessing them as
+|SUCC(i,j) == succ[(i)<<4 @t${}\OR{}$@> (j)]|.
 %Need to check which is faster.
 On some computers, 1d was
 clearly slower, by about 10\,\%. On others, there was only a small
@@ -2407,7 +2517,7 @@ variation, less than the variation between runs of the same program.
 % 
 \end{enumerate}
 
-@d SUCC_ALTERNATE(i,j) succ[(i)<<4 | (j)] // A shift of 4 is sufficient for |MAXN+1==16|
+@q SUCC_ALTERNATE(i,j) succ[(i)<<4 | (j)] // A shift of 4 is sufficient for |MAXN+1==16| @>
 @q assert(1<<SHIFT >= MAXN+1); # if @>
 
 @

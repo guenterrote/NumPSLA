@@ -41,7 +41,8 @@ typedef int_least64_t large_int; /* for intermediate calculations */
 @*1 Turn point set with coordinates into PSLA.
 
 We insert the lines one by one into the arrangement.  This is similar
-to the insertion of line $n$ in the recursive enumeration procedure.
+to the insertion of line $n$ in the recursive enumeration procedure
+|recursive_generate_PSLA| of Section*\ref{recursive-enumeration}.
 The difference is that we don't try all possibilities for the edge
 through which line $n$ exits, but we choose the correct edge the
 by orientation test.
@@ -49,7 +50,8 @@ By the zone theorem, the insertion of line $n$ takes $O(n)$ time.
 
 We have $n$ points. The first point (point $0$) is on the convex hull and the
 other points are sorted around this point.
-We get a PSLA with $n-1$ pseudolines.
+We get a PSLA with $n-1$ pseudolines, which correspond to points $1,\ldots,n-1$ in the order in which they are given.
+
 
 @<Subr...@>=
 void insert_line(int n);
@@ -84,7 +86,7 @@ void insert_line(int n)
       if (jplus==0) { // $F$ is unbounded
 	if (j==n-1 )
 	  { // $F$ is the top face.
-	    LINK(n,@,@,entering_edge,0);    /* complete insertion of line $n$ */
+	    LINK(n,@,@,entering_edge,0);    /* complete the insertion of line $n$ */
 	    return;
 	  }
 	jplus=j+1; /* jump to the upper ray of $F$ */
