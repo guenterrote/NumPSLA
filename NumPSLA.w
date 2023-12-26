@@ -39,6 +39,7 @@
   \advance\twodigits-100 }
 
 \newcommand{\jplus}{j^+}
+\newcommand{\jminus}{j^-}
 \newcommand{\jprime}{j'}
 \newcommand{\iprime}{i'}
 \newcommand{\jplusold}{j^+_{\mathrm{old}}}
@@ -331,6 +332,7 @@ whole program.
 
 
 @s jplus TeX
+@s jminus TeX
 @s jprime TeX
 @s iprime TeX
 @s jplusold TeX
@@ -404,7 +406,7 @@ exclude-files of nonrealizable AOTs, requires |enumAOT==1|. */
 \texttt{CWEB} provides a good structuring facility
 while keeping all pieces and the documentation in one place.
 This leads to a large monolithic program in one file, as opposed to
-a separation in thematically grouped files that a \textsc{c}-project
+a separation in thematically grouped files that a \textsc{C}-project
 usually has.
 
 For simplicity, I often use global variables.
@@ -450,6 +452,40 @@ I don't want to write $x$ three times.
 @q    }@>
 @q    printf(end);@>
 @q    } /* for \texttt{gcc}, compile with \texttt{-Wno-format-zero-length} to suppress warnings */@>
+
+@*1 Parallelization.
+
+The user can parallelize the enumeration
+by specifying a \emph{split level}, usually 8 or~9. The program will then work
+ normally up to this level of the tree, that is, it will
+ enumerate all 1,232,944 PSLAs with 8 lines, but it will only expand
+ a selection of these PSLAs.
+ The selection is determined as follows. As the PSLAs with 8 lines are
+ enumerated, a running counter is incremented, thus implicitly assigning a number
+ between 1 and 1,232,944 to each PSLA. We choose a modulus $m$ and a
+ value $k$. Then the program 
+  will expand only those nodes whose number is congruent to $k$
+  modulo~$m$.
+  By running
+ the program for $k=1,\ldots,m$, the work is split into $m$ roughly equal parts.
+ 
+ This usually leads to a quite balanced partition of the work.
+ For example, when enumerating AOTs with up to 13 points,
+ the program had to visit PSLAs with 12 pseudolines.
+ We split the computation into 400 parts at level 9.
+ The number of PSLAs with 12 lines that were visited was in the range between
+ 5,938,178,249,794
+ and
+ 5,894,432,599,972 PSLAs,
+ a variation of 0.74\,\%.
+%>>> 5938178249794 / 5894432599972
+%1.0074215200666148
+
+ 
+The variation of the runtime was more substantial: between 180 and 200
+hours per run. (The total running time was 3173 CPU days.)
+
+
 
 @*1 Command-line arguments.
 \label{sec:command}    
@@ -534,6 +570,7 @@ else
 @* Recursive Enumeration.
 \label{recursive-enumeration}
 
+This is the core of the algorithm.
 We extend an $x$-monotone pseudoline arrangement
  of $n-1$ lines $1,\dts, n-1$, 
  by threading an additional line $n$ through it
@@ -559,7 +596,7 @@ void recursive_generate_PSLA(int entering_edge, int k_right, int n)
 { /*
 The new line enters a face $F$ from the bottom.
 The edge through which it crosses is part of line |entering_edge|, and
-its endpoint is the crossing with |k_right|.
+its right endpoint is the crossing with |k_right|.
 */
 
 
@@ -675,7 +712,7 @@ shortly in the first recursive call. */
 	@<Check for exclusion...@>@;
         if (is_excluded) return;
         @<Gather statistics about the AOT, collect output@>@;
-@<Further processing of the AOT@>@;
+@<Further processing...@>@;
 
 @ Indicate Progress. The user should not despair while waiting for a
 long run.
@@ -781,7 +818,8 @@ if (fscanf(exclude_file, "%s\n", exclude_file_line)!=EOF)
 
   @ (The following program piece could be accelerated if the exclude-file
   would not store every decimal code completely but
-  indicate only the deviation from the previous code.)
+  eliminate the common prefix,
+  indicating only the deviation from the previous code.)
 @<Determine the matched length |matched_length|@> =
       matched_length = 2;
       while(excluded_code[matched_length+1] ==
@@ -794,12 +832,12 @@ if (fscanf(exclude_file, "%s\n", exclude_file_line)!=EOF)
 
     
 @* Conversion between different representations.
-@
+
 @*1 Convert from linked list to \texorpdfstring{$P$}{P}-matrix.
 
 Input: PSLA with $n$ lines $1\dts n$, stored in |succ|. % and |pred|.
 Output: $P$-matrix %|P|
-of size $(n+1)\times(n-1)$ for pseudoline arrangement on $n$ pseudolines.
+of size $(n+1)\times n$ for pseudoline arrangement on $n$ pseudolines.
 @<Subr...@>=
 
 void convert_to_P_matrix(P_matrix *P, int n)
@@ -904,7 +942,7 @@ k<i && i<j ? PaInverse[i][j]<PaInverse[i][k] :
 This is easy; we just scan the top face.  We
 know that 0, 1, and $n$ belong to the convex hull.  0 represents the line at $\infty$).
 
-The input is taken from the global variable |succ|. (|pred| is not
+The input is taken from the global array |succ|. (The array |pred| is not
 used.)
 The output is stored in the array |hulledges|.
 
@@ -1227,12 +1265,14 @@ a \emph{direction}.
 The edge lies between
 |@t\\{left\_vertex}@> == PRED(line0,right_vertex)| and
 |right_vertex| (which fulfills |right_vertex == SUCC(line0,@t\\{left\_vertex}@>)|).
-The direction is
-in the direction of the |succ|-pointers if
-|reversed==false|
-and
-in the direction of the |pred|-pointers if
-|reversed==true|.
+If
+|reversed==false|,
+the direction follows % is in the direction of
+the |succ|-pointers,
+and otherwise,
+% in the direction of
+the |pred|-pointers.
+%if |reversed==true|.
 The $P$-matrix is filled row-wise from right to left.
 
 The stardard, unchanged, setting would be obtained with |line0==0| and
@@ -1302,7 +1342,7 @@ AOT, except that the AOT is rotated or reflected.
 
 %
 We have to try all convex hull points as pivot points, and
-for each pivot point we have to choose two directions (reflected and unreflected).
+for each pivot point we have to choose two directions, reflected (|reversed|) and unreflected.
 The average number of extreme vertices is slightly less than 4.
 It does not pay off to shorten the loop considerably.
 (The average \emph{squared} face size matters!)
@@ -1318,6 +1358,8 @@ In comparison with the
 more natural left-to-right order, this gives, experimentally, a
 quicker way to eliminate tentative $P$-matrices than the 
 left-to-right order.
+(Those experiments were done with an early version of the program;
+there was no systematic exploration of the various possibilities.)
 
 @<Global...@>=
 
@@ -1495,21 +1537,22 @@ The output parameters |rotation_period|,
 symmetry of the AOT, are determined on the way, as a side result.
 
 As a speed-up, there is a fast screening procedure that tries
-to eliminate a few candidates in advance.
+to eliminate a few candidates in advance, see Section~\ref{sec:screening}.
 
 @<Subr...@>=
 
 @<Screening procedures@> @;
 
-boolean is_lex_smallest_P_matrix(int n,
+boolean has_lex_smallest_P_matrix(int n,
 int *hulledges, int hullsize, int*
 rotation_period, boolean *has_mirror_symmetry, boolean *has_fixed_vertex)
 {
-  if (!screen(n, hulledges, hullsize))
+  if (!screen_lex_smallest(n, hulledges, hullsize))
     return false;
 
 #if profile
-    numTests ++;
+    numTests ++; /* |has_lex_smallest_P_matrix| tests that pass the
+    screening test */
 #endif
 
 
@@ -1545,7 +1588,7 @@ Compute $P_{p,n-q}$ for all choices of line 0.
 The last entry $q=n-1$ can be omitted, because in every matrix, row $P_p$ is a
 permutation
 of the same elements. If all elements except the last one agree, then
-the last one must also agree.. */
+the last one must also agree. */
        int target_value = current_crossing_0 =
        PRED(p,current_crossing_0); /* special treatment of candidate
        0:
@@ -1646,6 +1689,8 @@ $P_{p,n-q}$ in the matrix $P^0$.
 
 
 @*  Screening of candidates to reduce the running time.
+\label{sec:screening}
+
 
 Suppose we don't have correct labels, but we only known line 0 and
 line 1. We can still determine the upper right corner $P_{1n}$ of the
@@ -1785,10 +1830,13 @@ computing $\bar Q(i,j)$ would also be fast in this case.)
  Eventually, only
  2,343,203,071 PSLA are really lex-min, and this is the number of
  AOTs that we really want.
+ The screening test seems to be more and more effective for larger
+ $n$, but this is in line with the fact that the probability of being
+ lex-smallest decreases, since it is close to $1/(2n+2)$.
 
 
 @<Screening procedures@>=
-boolean screen(int n,
+boolean screen_lex_smallest(int n,
 int *hulledges, int hullsize)
 {
 @q  // |  if(P_1_n_forward[0]==2) return true;| @>
@@ -2027,7 +2075,7 @@ U_PSLAcount[2]=
    int n_points = n+1; // number of points of the AOT
 
 boolean lex_smallest =
-is_lex_smallest_P_matrix(n,
+has_lex_smallest_P_matrix(n,
 hulledges, hullsize,
 &rotation_period, &has_mirror_symmetry, &has_fixed_vertex);
 
@@ -2078,7 +2126,7 @@ for_int_from_to(n,3,n_max+1) {
   if (split_level!=0 && n>split_level)  printf("*,"); @+
   else  printf(", ");
   printf("#PSLA=%11Ld", countPSLA[n]);
-#if 1
+#if enumAOT
   printf(", #AOT=%10Ld, #OAOT=%10Ld, #symm. AOT=%7Ld, ",
   countU[n], 
 countO[n], symmetric
@@ -2095,14 +2143,15 @@ printf("Total tests is_lex_min (after screening) = %Ld, total comparisons = %Ld,
 numTests, numComparisons, numComparisons/(double)numTests);
 #endif
 
-printf("passed %Ld, saved %Ld out of %Ld = %.2f%%\n", cpass, csaved,
+#if enumAOT
+printf("Prescreening: passed %Ld, saved %Ld out of %Ld = %.2f%%\n", cpass, csaved,
                cpass+csaved, 100*csaved/(double)(cpass+csaved));
-
+#endif
 @
 The statistics gathered in the |classcount|
 array are
 written to a |reportfile| so that a subsequent program
-can conveniently read and process it.
+can conveniently read and process them.
 
 
 @<Report statistics...@>=
@@ -2191,6 +2240,10 @@ in the |succ| and |pred| arrays
 
 $P$-matrix is / is not available.
 
+After computing the inverse $P$-matrix, one can perform a few tests on the
+order type, using orientation queries, see for
+example~Section~\ref{sec:check-orientation}.
+
 @*1 Further exclusion criteria.
 \label{further-exclusion-criteria}
 
@@ -2218,46 +2271,6 @@ print_id(n);printf("\n"); }
 #endif
 @qprint_id(n); printf(" .. %d",matched_length); printf(" --%Ld\n",countPSLA[n]);@>
 
-@*2 Checking correctness of the orientation test.
-
-
-After computing the inverse $P$-matrix, one can perform a few tests on the
-order type, using orientation queries.
-The following test program
-compares the orientation queries against an
-explicitly computed three-dimensional $\Lambda$-matrix
-(see Section~\ref{Lambda}).
-@<Further processing...@>=
-
-#if 0
-P_matrix PaInverse; // the orientation test is computed from this array.
-convert_to_inverse_P_matrix(&PaInverse,n);
-@#
-small_lambda_matrix S;
-convert_to_small_lambda_matrix(&S, n_points);
-large_Lambda_matrix L;
-convert_small_to_large(&S, &L, n_points);
-@<Compare orientation tests@>@;
-#endif
-
-@
-@<Compare orientation tests@>=
-
-{int n=n_points;
-  for_int_from_to(i,0,n-1)
-  for_int_from_to(j,0,n-1)
-  if (i!=j)
-  for_int_from_to(k,0,n-1)
-  if (k!=j && k!=i)
-  if(getOrientation(PaInverse,i,j,k) != L[i][j][k]) {
-    @qprint_small(S, n_points);@>
-  printf ("[%d,%d,%d]=%d!=%d\n", i,j,k,
-  getOrientation(PaInverse,i,j,k), L[i][j][k]);
-  exit(1);
-  }
-  ;
-
-}  
 @*2 Various further test programs.
 
 @ Print ``some'' example.
@@ -2450,6 +2463,42 @@ int n)
             }
 }
 
+@*1 Checking correctness of the orientation test.
+\label{sec:check-orientation}
+
+The following test program
+ computes the inverse $P$-matrix and then
+exhaustively
+compares the orientation queries against an
+explicitly computed three-dimensional $\Lambda$-matrix
+(see Section~\ref{Lambda}).
+@<Further processing...@>=
+
+#if 0
+P_matrix PaInverse; // the orientation test is computed from this array.
+convert_to_inverse_P_matrix(&PaInverse,n);
+@#
+small_lambda_matrix S;
+convert_to_small_lambda_matrix(&S, n_points);
+large_Lambda_matrix L;
+convert_small_to_large(&S, &L, n_points);
+@<Compare orientation tests@>@;
+#endif
+
+@
+@<Compare orientation tests@>=
+
+  for_int_from_to(i,0,n_points-1)
+  for_int_from_to(j,0,n_points-1)
+  for_int_from_to(k,0,n_points-1)
+  if (i!=j && k!=j && k!=i)
+  if(getOrientation(PaInverse,i,j,k) != L[i][j][k]) {
+    @qprint_small(S, n_points);@>
+  printf ("[%d,%d,%d]=%d!=%d\n", i,j,k,
+  getOrientation(PaInverse,i,j,k), L[i][j][k]);
+  exit(1);
+  }
+
 
 
 @i readDataBase.w
@@ -2493,7 +2542,7 @@ arrays,
 accessing them as
 |SUCC(i,j) == succ[(i)<<4 @t${}\OR{}$@> (j)]|.
 %Need to check which is faster.
-On some computers, 1d was
+On some computers, this 1d option was
 clearly slower, by about 10\,\%. On others, there was only a small
 variation, less than the variation between runs of the same program.
 % see change file succ-1d.ch
@@ -2519,6 +2568,16 @@ variation, less than the variation between runs of the same program.
 
 @q SUCC_ALTERNATE(i,j) succ[(i)<<4 | (j)] // A shift of 4 is sufficient for |MAXN+1==16| @>
 @q assert(1<<SHIFT >= MAXN+1); # if @>
+
+@*1 Potential speed-ups.
+
+\begin{enumerate}
+\item In
+  |has_lex_smallest_P_matrix|, special treatment of the first row of
+  $P$ to avoid treating $P_{1n}$ again (which has already been checked
+  during screening). (Minor)
+\item More elaborate pre-screening.
+\end{enumerate}
 
 @
 \markboth{}{Table of contents}
