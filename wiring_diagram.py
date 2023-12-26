@@ -1,4 +1,4 @@
-def print_wiring_diagram(n,SUCC, ipe=False):
+def print_wiring_diagram(n,SUCC, ipe=False, text=None):
     # ipe=False: ASCII, horizontal
     # ipe=True: wiring diagram with smooth curves, written to an IPE-file
     # Each wiring diagram occupies a separate page
@@ -15,6 +15,7 @@ def print_wiring_diagram(n,SUCC, ipe=False):
     if ipe:
         Paths = [[f"0 {i-1.5} m"] for i in range(n+1)] # Paths[0] is not used
     else:
+        if text: print(text)
         Tracks = [" "] * (2*n-1)
         for i in range(1,n+1):
             Tracks[2*i-2] += code(i)
@@ -65,7 +66,7 @@ def print_wiring_diagram(n,SUCC, ipe=False):
         # right boundary
         for i in range(1,n+1):
             Paths[i].append(f"{width} {n-i-0.5} l")
-        draw_ipe(n,Paths,width)
+        draw_ipe(n,Paths,width,text)
     else:
         for p in range(1,n+1):
             i = line_at[p]
@@ -87,7 +88,7 @@ def IPE_start(filename="wire.ipe"):
     ipefile = open(filename,"w")
     ipefile.write(ipestart)
         
-def draw_ipe(n,Paths,width):
+def draw_ipe(n,Paths,width,text):
     if not WRITE_IPE:
         IPE_start()
         
@@ -100,6 +101,11 @@ def draw_ipe(n,Paths,width):
         ipefile.write('<path stroke="black">\n'
                       + "\n".join(P) + "\n</path>\n")
     ipefile.write("</group>\n")
+
+    if text:
+        ipefile.write('<text transformations="translations" pos="32 16" '
+                      'stroke="black" type="label" valign="baseline">'
+                      +  text + '</text>\n')   
     ipefile.write("</page>\n")
         
 def IPE_end():
