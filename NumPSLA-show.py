@@ -26,6 +26,7 @@ Some optional extra text after the PSLA in the file is added to the output.
 
 from wiring_diagram import print_wiring_diagram, IPE_end
 
+
 def LINK(j, k1,k2): # make crossing with k and k adjacent on line j
     SUCC[j,k1] = k2;
     PRED[j,k2] = k1;
@@ -115,6 +116,7 @@ def next_target():
                 exit(1)
             return target,text
         elif code.startswith("P"):
+            ## P-matrices are handled directly:
             show_from_P_matrix(code, text)
         else:
             printf("illegal code:",line)
@@ -126,6 +128,7 @@ def decode(c):
             
 def show_from_P_matrix(code, text=None):
     "code starts with 'P'."
+    global IPE_FILE_WRITTEN
     if ":" in code:
         P = code[2:].split(":")
     else:
@@ -136,14 +139,24 @@ def show_from_P_matrix(code, text=None):
         row = list(map(decode, row))
         for a,b in zip(row, row[1:]+row[:1]):
             SUCC[i,a] = b
+
     print_wiring_diagram(n, SUCC, ipe=IPE, text=text)
-            
+    IPE_FILE_WRITTEN += 1
+
+def close_ipe_with_message():
+    if IPE_FILE_WRITTEN:
+        print('Ipe-file "wire.ipe" written with',IPE_FILE_WRITTEN,
+              'pseudoline arrangements.')
+    IPE_end() # finish and close ipe-file, in case it was used.
+    exit(0)
+    
 if __name__ == "__main__":
     mode = "ENUMERATE"
     n_max = 6 # default
     target = ""
     text = None
     IPE = False
+    IPE_FILE_WRITTEN = 0
     import sys
     if len(sys.argv)>=2:
         if sys.argv[1][0]=="-" and sys.argv[1] != "-t":
@@ -161,16 +174,19 @@ if __name__ == "__main__":
             n_max = 999
             targets_file = open(sys.argv[2],"r")
             # the targets must appear in sorted order                
-            target,text = next_target()
         else:
             n_max = int(sys.argv[1])
         IPE = sys.argv[-1]=="-ipe"
+        
     if mode == "TARGET1-P":
         show_from_P_matrix(code)
-        if IPE:
-            print('Ipe-file "wire.ipe" written.')
-            IPE_end()
-        exit(0)
+        close_ipe_with_message()
+    elif mode == "TARGET*":
+        try:
+            target,text = next_target()
+        except StopIteration:
+            # this happens if the file contains only P-matrices.
+            close_ipe_with_message()
     
     assert n_max>=2
 
@@ -188,7 +204,5 @@ if __name__ == "__main__":
     if mode=="ENUMERATE":
         print (countPSLA[2:])
 
-    if IPE:
-        print('Ipe-file "wire.ipe" written.')
-    IPE_end() # finish and close ipe-file, in case it was used.
+    close_ipe_with_message()
   
