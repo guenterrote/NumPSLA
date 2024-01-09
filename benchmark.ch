@@ -21,9 +21,9 @@ suppress=reflist,suppress=index%
 
 
 @x
-@d readdatabase 0 // version for reading point sets of the order-type database
+#define readdatabase 0 //  version for reading point sets of the order-type
 @y
-@d readdatabase 1 // version for reading point sets of the order-type database
+#define readdatabase 1 //  version for reading point sets of the order-type
 @z
 
 

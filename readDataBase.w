@@ -42,7 +42,7 @@ typedef int_least64_t large_int; /* for intermediate calculations */
 
 We insert the lines one by one into the arrangement.  This is similar
 to the insertion of line $n$ in the recursive enumeration procedure
-|recursive_generate_PSLA| of Section*\ref{recursive-enumeration}.
+|recursive_generate_PSLA| of Section~\ref{recursive-enumeration}.
 The difference is that we don't try all possibilities for the edge
 through which line $n$ exits, but we choose the correct edge the
 by orientation test.

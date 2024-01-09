@@ -7,11 +7,20 @@
 \pagestyle{myheadings}
 \renewcommand{\sectionmark}[1]{ \markboth{}{#1} }
 \usepackage{amsmath}
-\hypersetup{colorlinks=true,linkcolor=blue,citecolor=darkgreen,
+%\usepackage{color}
+\hypersetup{colorlinks=true,linkcolor=blue,citecolor=magenta,%darkgreen,% ??
   filecolor=BrickRed,urlcolor=blue}
   
 \let\CwebAssign=\gets     % assignment \let\K=\gets
 \def\CwebRankNoEject{1}
+
+{\makeatletter % C notation s->x: make the arrow a bit more spacious
+\global\setbox\cwbb@@pointer=\hbox{%
+            \kern -.04em
+            \lower 1.1ex \hbox{\large$\vec{\kern .5em}$}%
+            \kern .1em
+            }
+}
 %\secpagedepth=-2
 
 \begin{document}
@@ -356,7 +365,7 @@ enumeration algorithm is a depth-first traversal of this tree.
 
 @p
 
-
+@<Default preprocessor...@>@;
 @<Include standard libaries@>@;
 @<Types and data structures@>@;
 @<Global variables@>@;
@@ -393,12 +402,31 @@ set these options at compile-time.
 (Other options, which are less permanent, can be set by
 command-line switches, see Section~\ref{sec:command}.)
 
-@d enumAOT 1 /* purpose is enumeration of AOTs */
-/* Other purposes might be enumeration of PSLAs */
-@d readdatabase 0 // version for reading point sets of the order-type database
-@d generatelist 0  /* List all PSLAs plus their IDs, as preparation for generating
-exclude-files of nonrealizable AOTs, requires |enumAOT==1|. */
-@d profile 1 // gather statistics and profiling information
+The compilation can be controlled by defining the following
+preprocessor macros for be 0 or 1.
+
+@<Default preprocessor switch settings@>=
+#ifndef enumAOT
+#define enumAOT 1
+/*  indicates that the program purpose is enumeration of
+AOTs.
+This is the default action.
+Other purposes, which would still need to be implemented,
+might be enumeration of PSLAs. */
+#endif@#
+#ifndef readdatabase
+#define readdatabase 0 //  version for reading point sets of the order-type
+#endif@#
+#ifndef generatelist
+#define generatelist 0 /*
+List all PSLAs plus their IDs, as preparation for generating
+exclude-files of nonrealizable AOTs, requires |enumAOT| to be set.
+*/
+#endif@#
+#ifndef profile
+#define profile 1 /* gather statistics and profiling information. This does not
+cost much and should be on by default. */
+#endif@#
 
 
 @*1 On programming style.
@@ -462,18 +490,18 @@ by specifying a \emph{split level}, usually 8 or~9. The program will then work
  a selection of these PSLAs.
  The selection is determined as follows. As the PSLAs with 8 lines are
  enumerated, a running counter is incremented, thus implicitly assigning a number
- between 1 and 1,232,944 to each PSLA. We choose a modulus $m$ and a
- value $k$. Then the program 
-  will expand only those nodes whose number is congruent to $k$
+ between 1 and 1,232,944 to each PSLA. We choose a modulus |m| = |parts| and a
+ value |k| = |part|. Then the program 
+  will explore the subtree of only those nodes whose number is congruent to $k$
   modulo~$m$.
   By running
  the program for $k=1,\ldots,m$, the work is split into $m$ roughly equal parts.
  
  This usually leads to a quite balanced partition of the work.
  For example, when enumerating AOTs with up to 13 points,
- the program had to visit PSLAs with 12 pseudolines.
+ the program had to visit all PSLAs with 12 pseudolines.
  We split the computation into 400 parts at level 9.
- The number of PSLAs with 12 lines that were visited was in the range between
+ The number of PSLAs with 12 lines that were visited in each part was in the range between
  5,938,178,249,794
  and
  5,894,432,599,972 PSLAs,
@@ -483,18 +511,20 @@ by specifying a \emph{split level}, usually 8 or~9. The program will then work
 
  
 The variation of the runtime was more substantial: between 180 and 200
-hours per run. (The total running time was 3173 CPU days.)
+hours per run,
+and it may be due to differences between processors on which the
+tasks were run. The total running time was 3173 CPU days.
 
 
 
 @*1 Command-line arguments.
 \label{sec:command}    
-@d PRINT_INSTRUCTIONS     printf(
+@d PRINT_INSTRUCTIONS     fprintf(stderr,
 "Usage: %s n [-exclude excludefile] [splitlevel parts part] [fileprefix]\n", argv[0]);
 
  @<Global ...@>=
 int n_max,split_level=0;
-unsigned int parts=1000,part=0;
+unsigned int parts=1000,part=0; // default values
 char* fileprefix = "reportPSLA"; // default name for the report-file
 char* exclude_file_name = 0;
 char fname[200] = "";
@@ -516,7 +546,7 @@ else {
 printf("Enumeration up to n = %d pseudolines, %d points.\n", n_max, n_max+1);
 if (n_max>MAXN)
 { 
-printf("The largest allowed value is %d. Aborting.\n", MAXN);
+fprintf(stderr,"The largest allowed value for n is %d. Aborting.\n", MAXN);
 exit(1);
 }
 
@@ -548,7 +578,7 @@ parts = 1;
 else
 {
   if (exclude_file_name != 0)
-  { printf("The -exclude option with a positive splitlevel %d is not implemented. Aborting.\n", split_level);
+  { fprintf(stderr,"The -exclude option with a positive splitlevel %d is not implemented. Aborting.\n", split_level);
     exit(1);
   }
 
@@ -626,12 +656,8 @@ its right endpoint is the crossing with |k_right|.
 }
 	if(hopeful)
 #endif
-{     localCountPSLA[n+1]=0; // reset child counter
-	    recursive_generate_PSLA_start( n+1);
+	    recursive_generate_PSLA_start(n+1);
             /* thread the next pseudoline */
-@q            if (localCountPSLA[n+1]>max_children[n])@>
-@q            max_children[n]= localCountPSLA[n+1];@>
-}            
 }
 	return;
       }
@@ -672,11 +698,12 @@ LINK(j,@,@,k_left,k_right); // undo the changes
 }
 
   void recursive_generate_PSLA_start(int n)
-  { LINK(0,@,@,n-1,n); /* insert line $n$ on line 0 */
+{   localCountPSLA[n]=0; // reset child counter
+    LINK(0,@,@,n-1,n); /* insert line $n$ on line 0 */
     LINK(0,@,@,n,1);
       recursive_generate_PSLA(0, 0, n);
       /* enter the recursion. */
-      /* There us a little trick: With these parameters $0,0$,
+      /* There is a little trick: With these parameters $0,0$,
       the procedure
 |recursive_generate_PSLA| will skip the first loop and
 will then correctly scan the edges of the bottom face $F$ from right to left.
@@ -1385,7 +1412,7 @@ excluded by the comparison of the
 @<Subr...@>=
 
 void prepare_label_arrays(int n,
-int *hulledges, int hullsize, boolean compute_all)
+int hulledges[], int hullsize, boolean compute_all)
 {
   for_int_from_to(r,0,hullsize-1)
   if( compute_all || P_1_n_reverse[r] ==P_1_n_forward[0] ||
@@ -1782,13 +1809,13 @@ $h$ forward candidates, whose corresponding value $P_{1n}$ is computed
 in the array |P_1_n_forward[r]| for $r=0,\ldots, h-1$,
 and
 $h$ backward candidates, for which
-the array |P_1_n_backward| is used.
+the array |P_1_n_reverse| is used.
 The value $P_{1n}$ for the current solution, whose lex-minimality we
 are checking,
 is in |P_1_n_forward[0]|.
 If any other candidate has a smaller value 
 |P_1_n_forward[r]| or
- |P_1_n_backward[r]| than this, we can immediately abandon the current solution
+ |P_1_n_reverse[r]| than this, we can immediately abandon the current solution
 and |return false|.
 
 This cannot occur if $P_{1n}=2$ for line 0, but
@@ -1802,7 +1829,7 @@ an adjacent angle and mirroring the PSLA exchanges $a$ with $n+2-a$. ]
 
 If any candidate has a value 
 |P_1_n_forward[r]| or
-|P_1_n_backward[r]|
+|P_1_n_reverse[r]|
 larger than |P_1_n_forward[0]|, that candidate can be excluded from
 further consideration.
 
@@ -2504,6 +2531,24 @@ convert_small_to_large(&S, &L, n_points);
 @i readDataBase.w
 
 
+@* Timings.
+
+On my five-year-old Laptop (as of 2023), \texttt{NumPSLA 9} took
+8 seconds
+to determine, among other quantities, the number
+$B_9= 112018190$ of pseudoline arrangements with 9 lines.
+
+There is a program \emph{REFLECT} by Donald Knuth, to accompany the
+enumerations in his book \emph{Axioms and Hulls} \cite{axioms-hulls},
+see \url{https://www-cs-faculty.stanford.edu/~knuth/programs.html}.
+This program computes the quantities $B_n,C_n,D_n,E_n$ that are
+defined in the book.  The stripped-down version which computes only
+the quantities $B_n$ took 37 seconds. (When Knuth ran it in 1991,
+without compiler optimizations and with the \texttt{-g} compiler
+option, the same program took nearly 20 hours.)
+
+
+
 @* Things to consider.
 
 \begin{enumerate}
@@ -2580,10 +2625,14 @@ variation, less than the variation between runs of the same program.
 \end{enumerate}
 
 @
+\markboth{}{References}
+\bibliographystyle{plainurl}
+\bibliography{ENUM}
+
 \markboth{}{Table of contents}
 \tableofcontents
 \eject\markboth{}{Index}
-\iftrue % to offset a dangling \fi from somewhere
+\iftrue % to offset a mysterious dangling \fi from somewhere
 \end{document}
 %%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Local Variables:
