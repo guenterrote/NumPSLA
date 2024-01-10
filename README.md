@@ -62,7 +62,7 @@ Beware that this feature does not work together with exclude-files.
 
   contains a function to draw a wiring diagram of a PSLA that is stored in the `SUCC` array.
   By default, it draws an ASCII-art representation. With the option `ipe=True`,
-  it will generate an IPE-file. For this, the module `ipestart.py` is required.
+  it will generate an IPE-file (see https://ipe.otfried.org/). For this, the module `ipestart.py` is required.
 
 + `NumPSLA-show.py`
 
