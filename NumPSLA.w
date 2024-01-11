@@ -1366,6 +1366,24 @@ In order to generate every AOT only once, we check whether the
 the current $P$-matrix $P$
 the smallest among all $P$-matrices $P'$ that represent the same
 AOT, except that the AOT is rotated or reflected.
+If done naively, this takes $O(n^2h)$ time if there are $h$ hull vertices.
+
+We could use a
+(rather complicated) lex-smallest
+representation of
+Aloupis et al.~\cite{aloupis-OT-isomorphism-2014}
+that can be computed in $O(n^2)$ time in the worst
+case.\footnote
+{In one place of their
+  algorithm~\cite[p.~412]{aloupis-OT-isomorphism-2014}, they propose
+  to use a trie to sort a set strings in  time linear in the total length of
+  the strings.
+  However, the size of the string alphabet is not constant: it equals $m$, the number of
+  convex layers of the point set; hence the usage of a trie should be
+  replaced by alternative linear-time methods for sorting strings.}  
+However, our more straightforward approach is faster than this in
+practice,
+see Section~\ref{sec:screening}.
 
 %
 We have to try all convex hull points as pivot points, and
