@@ -1,5 +1,6 @@
 # NumPSLA
-An experimental research tool for pseudoline arrangements and order types
+An experimental research tool for pseudoline arrangements and order types.
+There is a manuscript NumPSLA-paper.pdf that describes the background and the program.
 
 # The main enumeration program
 `NumPSLA.w` is written in CWEB (the CWEB system of structured documentation of Donald E. Knuth and Silvio Levy,
