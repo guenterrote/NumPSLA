@@ -95,7 +95,7 @@ Recently, we have completed the statistics for 13 points on
 a compute-cluster. The results are in the file `crossing+halving-results-13.txt`.
 
 # Benchmark
-As a benchmark, we read point sets from the order-type database and compute their convex hull.
+As a benchmark, we read point sets from the order-type database and compute their convex hull, see Appendix A of the paper.
 The benchmark program is generated with the change-file `benchmark.ch`:
 ```
 ctangle NumPSLA.w benchmark.ch
