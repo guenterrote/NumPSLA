@@ -520,7 +520,9 @@ tasks were run. The total running time was 3173 CPU days.
 @*1 Command-line arguments.
 \label{sec:command}    
 @d PRINT_INSTRUCTIONS     fprintf(stderr,
-"Usage: %s n [-exclude excludefile] [splitlevel parts part] [fileprefix]\n", argv[0]);
+"Usage: %s n [splitlevel parts part] [fileprefix]\n"
+"or     %s n -exclude excludefile [fileprefix]\n", 
+argv[0], argv[0]);
 
  @<Global ...@>=
 int n_max,split_level=0;
