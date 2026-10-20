@@ -23,7 +23,11 @@ For convenience, the pdf-Version of this file is available as `NumPSLA-pdf.pdf`.
 
 The program is called with the parameters
 ```
-./NumPSLA n [-exclude excludefile] [splitlevel parts part] [fileprefix]
+./NumPSLA n [splitlevel parts part] [fileprefix]
+```
+or
+```
+./NumPSLA n -exclude excludefile [0 fileprefix]
 ```
 The pseudoline arrangments will be enumerated up to n pseudolines.
 This corresponds to AOTs with up to n+1 points.
@@ -35,7 +39,8 @@ aggregate it into interesting tables.
 The excludefile can be used to enumerate only _realizable_ AOTs with up to
 11 points. For this purpose the three files
 `exclude11.txt`, `exclude10.txt` (for up to 10 points), and `exclude09.txt` (for 9 points) are provided.
-`exclude11.txt` is provided in gzipped-format because its uncompressed size is 184.6 MBytes.
+`exclude11.txt` is provided in gzipped-format because its uncompressed size is 184.6 MBytes. Beware of the
+shift in the parameter: For `./NumPSLA 9` you need the excludefile for at least 10 points.
 
 ## Parallel processing
 The parameters "`splitlevel parts part`" are used to separate the enumeration task
