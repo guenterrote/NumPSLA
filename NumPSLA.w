@@ -521,7 +521,7 @@ tasks were run. The total running time was 3173 CPU days.
 \label{sec:command}    
 @d PRINT_INSTRUCTIONS     fprintf(stderr,
 "Usage: %s n [splitlevel parts part] [fileprefix]\n"
-"or     %s n -exclude excludefile [fileprefix]\n", 
+"or     %s n -exclude excludefile 0 [fileprefix]\n", 
 argv[0], argv[0]);
 
  @<Global ...@>=
@@ -799,6 +799,15 @@ char exclude_file_line[100];
 
 @
 @<Check for exclusion and set the flag |is_excluded| @>=
+if (excluded_length>0 && n<=excluded_length &&
+(n<=matched_length // gone on to a sibling at a level where the entry still had more to match.
+||
+(n==matched_length+1 && localCountPSLA[n]>excluded_code[n])))
+// overshooting at the first unmatched level
+{ fprintf(stderr, "Exclude-file entry was skipped (not in tree, unsorted, or not prefix-free):");
+  for_int_from_to(q,3,excluded_length) fprintf(stderr,".%d",excluded_code[q]);
+  fprintf(stderr,"\n"); exit(1);
+}
 if (n==matched_length+1 &&
 localCountPSLA[n]==excluded_code[n])
 {
