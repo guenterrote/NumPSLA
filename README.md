@@ -115,7 +115,7 @@ ctangle NumPSLA.w benchmark.ch
    It consists of 94 files with a total of 102,718,567,908 bytes (102.7 GBytes),
    44 bytes per order type.
    We assume that the order types with up to 10 points are stored in the
-   current directory in with the original file names
+   current directory with the original file names
    `otypes10.b16`, `otypes09.b16`, `otypes08.b08`, etc.,
    and the order types with 11 points are stored 
    in a subdirectory `Ordertypes` with names
