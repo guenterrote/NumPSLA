@@ -159,7 +159,7 @@ ctangle NumPSLA.w benchmark.ch
    python3 merge-non-realizable.py exclude09.txt exclude10-raw.txt exclude10.txt
    python3 merge-non-realizable.py exclude10.txt exclude11-raw.txt exclude11.txt
    ```
-   This merges the files and removes 10-point AOTs whose code hat a prefix appearing
+   This merges the files and removes 10-point AOTs whose code has a prefix appearing
    in `exclude09.txt` etc.
 
 The file `exclude11.txt` can be used for excluding the nonrealizable AOTs for up to 11 points.
