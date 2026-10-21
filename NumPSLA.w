@@ -383,6 +383,7 @@ int main (int argc,char* argv[])
 #if enumAOT
   @<Initialize statistics and open reporting file@>;
   @<Start the generation@>;
+  @<Check that the exclude-file has been used completely@>;
   @<Report statistics@>;
 #endif
   return 0;
@@ -519,83 +520,137 @@ tasks were run. The total running time was 3173 CPU days.
 
 @*1 Command-line arguments.
 \label{sec:command}    
+The program is called in one of the following ways:
+\begin{verbatim}
+NumPSLA n [fileprefix]
+NumPSLA n splitlevel parts part [fileprefix]
+NumPSLA n -exclude excludefile [fileprefix]
+\end{verbatim}
+The parameter $n$ is the number of pseudolines, $3\le n\le |MAXN|$.
+The second form is for parallel processing, see the previous section.
+The \emph{splitlevel} must be between 3 and $n-1$, $|parts|\ge1$, and
+$0\le|part|\le|parts|$. (|part| is taken modulo |parts|.)
+The third form excludes the AOTs listed in the \emph{excludefile}, see
+Section~\ref{sec:exclude}. It cannot be combined with splitting.
+
+If a \emph{fileprefix} is given, the statistics are written to a report-file
+whose name starts with this prefix. In the second form, a report-file is
+always written, with the default prefix \texttt{reportPSLA}.
+The \emph{fileprefix} must not start with a digit or with \texttt{-}.
+
+Erroneous parameters lead to an error message, and the program is aborted.
+
 @d PRINT_INSTRUCTIONS     fprintf(stderr,
-"Usage: %s n [splitlevel parts part] [fileprefix]\n"
-"or     %s n -exclude excludefile 0 [fileprefix]\n", 
-argv[0], argv[0]);
+"Usage: %s n [fileprefix]\n"
+"or     %s n splitlevel parts part [fileprefix]\n"
+"or     %s n -exclude excludefile [fileprefix]\n", 
+program_name, program_name, program_name);
 
  @<Global ...@>=
 int n_max,split_level=0;
-unsigned int parts=1000,part=0; // default values
+unsigned int parts=1,part=0; // default values
 char* fileprefix = "reportPSLA"; // default name for the report-file
 char* exclude_file_name = 0;
 char fname[200] = "";
 FILE *reportfile = 0;
+char *program_name = "NumPSLA";
+
+@ Parameter errors lead to an error message and abort the program.
+@<Subr...@>=
+void usage_error(const char *format, const char *argument)
+{
+  fprintf(stderr, "Error: ");
+  fprintf(stderr, format, argument);
+  fprintf(stderr, " Aborting.\n");
+  PRINT_INSTRUCTIONS;
+  exit(1);
+}
+
+boolean is_number(const char *s)
+{ /* Is |s| a (decimal) integer, possibly with a sign? */
+  char *end;
+  if (*s==0) return false;
+  strtol(s, &end, 10);
+  return *end==0;
+}
+
+long parse_int(const char *s, const char *name, long low, long high)
+{
+  char message[200];
+  if (!is_number(s)) {
+    snprintf(message, sizeof(message), "The parameter %s must be an integer, but it is \"%%s\".", name);
+    usage_error(message, s);
+  }
+  long value = strtol(s, NULL, 10);
+  if (value<low || value>high) {
+    snprintf(message, sizeof(message),
+      "The parameter %s must be between %ld and %ld, but it is %%s.", name, low, high);
+    usage_error(message, s);
+  }
+  return value;
+}
 
 @
 @<Parse...@>=
-
+program_name = argv[0];
+int arg = 1; // index of the next command-line argument to be processed
 if (argc<2)
-n_max = 7;
+  n_max = 7;
 else {
   if (argv[1][0]=='-') { /* first argument ``\texttt{--help}'' gives
     help message. */
     PRINT_INSTRUCTIONS;
     exit(0);
-}
- n_max = atoi(argv[1]);
+  }
+  n_max = parse_int(argv[1], "n", 3, MAXN);
+  arg = 2;
 }
 printf("Enumeration up to n = %d pseudolines, %d points.\n", n_max, n_max+1);
-if (n_max>MAXN)
-{ 
-fprintf(stderr,"The largest allowed value for n is %d. Aborting.\n", MAXN);
-exit(1);
-}
 
-int argshift = 0;
-if (argc>=3)
-{
-  if(strcmp(argv[2],"-exclude")==0) {
-    if (argc>=4)
-    {
-      exclude_file_name = argv[3];
-      argshift = 2;
-      printf("Excluding entries from file %s.\n", exclude_file_name);
-      @<Open the exclude-file and read first line@>
-    }
-    else {
-      PRINT_INSTRUCTIONS;
-      exit(1);
-    }
-  }
+if (arg<argc && strcmp(argv[arg],"-exclude")==0) {
+  if (arg+1>=argc)
+    usage_error("The option %s must be followed by the name of the exclude-file.", argv[arg]);
+  exclude_file_name = argv[arg+1];
+  arg += 2;
+  if (arg<argc && is_number(argv[arg]))
+    usage_error("Unexpected numeric parameter %s after the exclude-file."
+      " (The -exclude option cannot be combined with a splitlevel,"
+      " and the former extra parameter 0 is no longer used.)", argv[arg]);
+  printf("Excluding entries from file %s.\n", exclude_file_name);
+  @<Open the exclude-file and read first line@>
 }
-if (argc>=3+argshift) {
- 
-  split_level = atoi(argv[2+argshift]);
-  if (split_level==0)
-  { if (argv[3+argshift][0]!='-') fileprefix = argv[3+argshift];
-snprintf(fname, sizeof(fname)-1, "%s-%d.txt", fileprefix,n_max);
-parts = 1;
- }
-else
-{
-  if (exclude_file_name != 0)
-  { fprintf(stderr,"The -exclude option with a positive splitlevel %d is not implemented. Aborting.\n", split_level);
-    exit(1);
-  }
-
-  if (argc>=4+argshift) parts = atoi(argv[3+argshift]);
-  if (argc>=5+argshift) part = atoi(argv[4+argshift]);
+else if (arg<argc && is_number(argv[arg])) {
+  if (n_max<4)
+    usage_error("Splitting is not possible for n = %s.", argv[1]);
+  split_level = parse_int(argv[arg], "splitlevel", 3, n_max-1);
+  if (arg+2>=argc)
+    usage_error("The splitlevel %s must be followed by the two parameters parts and part.", argv[arg]);
+  parts = parse_int(argv[arg+1], "parts", 1, 1000000000);
+  part = parse_int(argv[arg+2], "part", 0, parts);
   part = part % parts;
-  if (argc>=6+argshift) fileprefix = argv[5+argshift];
-  snprintf(fname, sizeof(fname)-1, "%s-%d-S%d-part_%d_of_%d.txt", fileprefix,n_max,
-  split_level, part,parts);
+  arg += 3;
+}
+if (arg<argc) {
+  if (argv[arg][0]=='-' || is_number(argv[arg]))
+    usage_error("Unexpected parameter %s.", argv[arg]);
+  fileprefix = argv[arg++];
+  if (split_level==0)
+    if (snprintf(fname, sizeof(fname), "%s-%d.txt", fileprefix,n_max)>=(int)sizeof(fname))
+      usage_error("The fileprefix %s is too long.", fileprefix);
+}
+if (arg<argc)
+  usage_error("Too many parameters, starting with %s.", argv[arg]);
+if (split_level>0) {
+  if (snprintf(fname, sizeof(fname), "%s-%d-S%d-part_%d_of_%d.txt", fileprefix,n_max,
+       split_level, part,parts)>=(int)sizeof(fname))
+    usage_error("The fileprefix %s is too long.", fileprefix);
   printf("Partial enumeration: split at level n = %d. Part %d of %d.\n",
   split_level, part,parts);
 }
+if (strlen(fname)) {
   printf("Results will be reported to file %s.\n", fname);
-  fflush(stdout);
 }
+fflush(stdout);
 
 
 
@@ -758,10 +813,16 @@ printf("..%Ld.. ", countPSLA[n]);
 
 
 @* Handling the exclude-file.
+\label{sec:exclude}
 
-It is assumed that the codes in the exclude-file are sorted in
-strictly increasing lexicographic order, and no code is a prefix of
-another code.
+The exclude-file contains the decimal codes (see
+Section~\ref{sec:dewey}) of PSLAs whose subtrees should be skipped,
+one per line.
+The codes must be sorted in
+strictly increasing lexicographic order, and no code may be a prefix of
+another code. This is checked when the file is read.
+Codes that are longer than $n$ (the |n_max| of the current run) are
+ignored.
 
 To give an example,
 here are a few lines from the middle of the file \texttt{exclude10.txt}:
@@ -787,6 +848,11 @@ enumeration.  During the enumeration, the decimal code of the
 currently visited tree node (as stored in |localCountPSLA|) agrees
 with |excluded_code| up to position |matched_length|.
 
+Since the file is processed with a single sequential pointer, an entry
+that does not correspond to a node of the tree would silently prevent
+all subsequent entries from being used.
+Therefore, the program checks that every entry is eventually
+matched; otherwise it aborts with an error message.
 
 
  @<Global variables@>+=
@@ -794,8 +860,10 @@ with |excluded_code| up to position |matched_length|.
  int excluded_length = 0;
  int matched_length = 0; /* These initial values will never lead to
  any match. */
- FILE *exclude_file;
-char exclude_file_line[100];
+ FILE *exclude_file = 0;
+ int exclude_line_number = 1; // current line of the exclude-file, for error messages
+ unsigned previous_code[MAXN+3]; // the previous code, for checking the order
+ int previous_length = 0;
 
 @
 @<Check for exclusion and set the flag |is_excluded| @>=
@@ -804,9 +872,11 @@ if (excluded_length>0 && n<=excluded_length &&
 ||
 (n==matched_length+1 && localCountPSLA[n]>excluded_code[n])))
 // overshooting at the first unmatched level
-{ fprintf(stderr, "Exclude-file entry was skipped (not in tree, unsorted, or not prefix-free):");
-  for_int_from_to(q,3,excluded_length) fprintf(stderr,".%d",excluded_code[q]);
-  fprintf(stderr,". Aborting.\n"); exit(1);
+{ fprintf(stderr, "Error: Exclude-file entry ");
+  print_excluded_code(stderr);
+  fprintf(stderr, " (line %d) was skipped (not in tree). Aborting.\n",
+    exclude_line_number);
+  exit(1);
 }
 if (n==matched_length+1 &&
 localCountPSLA[n]==excluded_code[n])
@@ -820,39 +890,106 @@ localCountPSLA[n]==excluded_code[n])
 }
 }
 
+@ At the end of the enumeration, all entries of the exclude-file must
+have been used.
+@<Check that the exclude-file has been used completely@>=
+if (excluded_length>0) {
+  fprintf(stderr, "Error: Exclude-file entry ");
+  print_excluded_code(stderr);
+  fprintf(stderr, " (line %d) was never reached (not in tree). Aborting.\n",
+    exclude_line_number);
+  exit(1);
+}
 
 @
 @<Open the exclude-file and read first line@>=
  exclude_file = fopen(exclude_file_name, "r");@;
+ if (exclude_file==NULL) {
+   fprintf(stderr, "Error: The exclude-file %s cannot be opened. Aborting.\n",
+     exclude_file_name);
+   exit(1);
+ }
  @<Get the next excluded decimal code...@>@;
  matched_length = 2;
 
 
  @
  @<Get the next excluded decimal code from the exclude-file@>=
- do {
-if (fscanf(exclude_file, "%s\n", exclude_file_line)!=EOF)
-  { 
-    char *str1 = exclude_file_line;
-    char *token, *saveptr;
-    excluded_length = 2;  @/
-    while (true)
-    {
-      token = strtok_r(str1, ".", &saveptr);
-      if (token == NULL)
-         break;
-@q      printf("%d: %s<<\n", excluded_length, token); @>
-      assert (excluded_length<MAXN+3-1);
-      excluded_code[++excluded_length] = atoi(token);
-      str1 = NULL;
-    }
-    }
-    else
-    {
-  excluded_length = 0; // end of file reached.
-  fclose(exclude_file);
+ do
+   excluded_length = read_excluded_code();
+ while (excluded_length>n_max); // patterns longer than |n_max| are filtered.
+
+@ The procedure |read_excluded_code| reads the next code from the
+exclude-file into |excluded_code[3@t\ldots@>excluded_length]| and returns
+|excluded_length|, or 0 when the end of the file is reached.
+It checks the syntax of the code and the order of the codes.
+Any error aborts the program.
+
+@<Subr...@>=
+void print_excluded_code(FILE *f)
+{
+  fprintf(f, "%u", excluded_code[3]);
+  for_int_from_to(q,4,excluded_length) fprintf(f,".%u",excluded_code[q]);
 }
-} while (excluded_length>n_max); // patterns longer than |n_max| are filtered.
+
+void exclude_file_error(const char *message)
+{
+  fprintf(stderr, "Error in exclude-file %s, line %d: %s Aborting.\n",
+    exclude_file_name, exclude_line_number, message);
+  exit(1);
+}
+
+int read_excluded_code(void)
+{
+  if (exclude_file==NULL) return 0; // end of file was already reached
+  int c = getc(exclude_file);
+  while (c==' ' || c=='\t' || c=='\r' || c=='\n') { // skip white space
+    if (c=='\n') exclude_line_number++;
+    c = getc(exclude_file);
+  }
+  if (c==EOF) {
+    if (ferror(exclude_file)) exclude_file_error("Read error.");
+    fclose(exclude_file);
+    exclude_file = NULL;
+    return 0;
+  }
+  int length = 2;
+  while (true) { // read one component
+    if (c<'0' || c>'9') exclude_file_error("Illegal character; a number was expected.");
+    unsigned long value = 0;
+    while (c>='0' && c<='9') {
+      value = 10*value + (c-'0');
+      if (value>1000000000) exclude_file_error("Number too large.");
+      c = getc(exclude_file);
+    }
+    if (value==0) exclude_file_error("Components of the code must be positive.");
+    if (length>=MAXN) exclude_file_error("Code is too long.");
+    excluded_code[++length] = value;
+    if (c!='.') break;
+    c = getc(exclude_file);
+  }
+  if (c!=EOF && c!=' ' && c!='\t' && c!='\r' && c!='\n')
+    exclude_file_error("Illegal character in code.");
+  if (c!=EOF) ungetc(c, exclude_file); // the line end is counted at the next call
+  @<Check that the code is larger than the previous code and not a
+  prefix of it, and store it as |previous_code|@>@;
+  return length;
+}
+
+@ @<Check that the code is larger...@>=
+if (previous_length>0) {
+  int common = previous_length<length ? previous_length : length;
+  int q = 3;
+  while (q<=common && previous_code[q]==excluded_code[q]) q++;
+  if (q>common)
+    exclude_file_error(previous_length==length ? "Duplicate code." :
+    previous_length<length ? "The previous code is a prefix of this code." :
+    "This code is a prefix of the previous code.");
+  if (previous_code[q]>excluded_code[q])
+    exclude_file_error("The codes are not sorted.");
+}
+for_int_from_to(q,3,length) previous_code[q]=excluded_code[q];
+previous_length = length;
 
   @ (The following program piece could be accelerated if the exclude-file
   would not store every decimal code completely but
@@ -860,13 +997,11 @@ if (fscanf(exclude_file, "%s\n", exclude_file_line)!=EOF)
   indicating only the deviation from the previous code.)
 @<Determine the matched length |matched_length|@> =
       matched_length = 2;
-      while(excluded_code[matched_length+1] ==
-      localCountPSLA[matched_length+1] &&
-      matched_length < excluded_length &&
-      matched_length < n)@/
-@q      {print_id(n);  printf(" ++%Ld\n",countPSLA[n]); @>
+      while(matched_length < excluded_length &&
+      matched_length < n &&
+      excluded_code[matched_length+1] ==
+      localCountPSLA[matched_length+1])@/
       matched_length ++;
-@q        printf(" ++%d\n",matched_length); } @>
 
     
 @* Conversion between different representations.
@@ -1028,6 +1163,7 @@ int upper_hull_PSLA(int n,
 }
 
 @* Unique identifiers, Dewey decimal notation.
+\label{sec:dewey}
 
 The recursive enumeration algorithm imposes an  implicit tree structure on PSLAs: the
 parents of a PSLA with $n$ lines is the unique PSLA on $n-1$ lines from
@@ -1527,7 +1663,7 @@ int *hulledges, int hullsize)
      
      for_int_from_to(q,1,n-1 )     { /* Compute $P_{p,n-q}$ by taking the minimum over all candidate choices of line 0. */
        int c;
-       int new_candidates, new_candidates_forward;
+       int new_candidates = 0, new_candidates_forward = 0;
        int current_min = n+1; // essentially $\infty$
        boolean reversed = false;
        int pos = p; /* position of line 0; the line we are currently
@@ -2115,6 +2251,10 @@ U_PSLAcount[2]=
 // All other counters are automatically initialized to 0.
   if (strlen(fname)) {
     reportfile = fopen(fname,"w");
+    if (reportfile==NULL) {
+      fprintf(stderr,"Error: The report-file %s cannot be opened for writing. Aborting.\n", fname);
+      exit(1);
+    }
   }
 
 
@@ -2304,7 +2444,7 @@ example~Section~\ref{sec:check-orientation}.
 \label{further-exclusion-criteria}
 
 If some PSLAs or AOTs and their subtrees should not be considered,
-they can be filtered here, by setting |is_excluded| to |false|.
+they can be filtered here, by setting |is_excluded| to |true|.
 @<Check for exclusion...@>=
 // Currently no further exclusion tests.
 

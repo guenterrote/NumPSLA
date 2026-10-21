@@ -65,8 +65,8 @@ def recursive_generate_PSLA(entering_edge, k_right, n):
             countPSLA[n]+=1
             localCountPSLA[n]+=1
             if mode!="ENUMERATE" and localCountPSLA[3:n+1]>target[:n-2]:
-                print("target",target,"not found.")
-                exit(0)            
+                print("Error: target",".".join(map(str,target)),"not found. Aborting.")
+                exit(1)            
             if mode=="ENUMERATE" or localCountPSLA[3:n+1]==target[:n-2]:
                 Process_PSLA(n)
                 if (n<n_max):
@@ -108,8 +108,8 @@ def next_target():
             text = parts[1]
         else:
             text = None
-        if "." in code:           
-            target = [int(x) for x in code.split(".")]
+        if "." in code or code.isdigit():
+            target = parse_code(code)
             # trailing "\n" is ignored
             if len(target) > n_max-2:
                 print("target", target, "too long. n_max =",n_max)
@@ -119,7 +119,16 @@ def next_target():
             ## P-matrices are handled directly:
             show_from_P_matrix(code, text)
         else:
-            printf("illegal code:",line)
+            print("Error: illegal code:", line, "Aborting.")
+            exit(1)
+
+def parse_code(code):
+    "decimal code such as 2.1.7.13 as a list of numbers; abort if illegal"
+    parts = code.split(".")
+    if not all(x.isdigit() and int(x)>0 for x in parts):
+        print("Error: illegal decimal code:", code, "Aborting.")
+        exit(1)
+    return [int(x) for x in parts]
 
 def decode(c):
     if "0"<=c<="9": return int(c)
@@ -164,17 +173,23 @@ if __name__ == "__main__":
             exit(0)
         if "." in sys.argv[1]:
             mode = "TARGET1"
-            target = [int(x) for x in sys.argv[1].split(".")]
-            n_max = len(target)+3
+            target = parse_code(sys.argv[1])
+            n_max = len(target)+2
         elif sys.argv[1].startswith("P"):
             code = sys.argv[1]
             mode = "TARGET1-P"
-        elif len(sys.argv)>=2 and sys.argv[1] == "-t":
+        elif sys.argv[1] == "-t":
+            if len(sys.argv)<3:
+                print("Error: option -t requires a targets-file. Aborting.")
+                exit(1)
             mode = "TARGET*"
             n_max = 999
             targets_file = open(sys.argv[2],"r")
             # the targets must appear in sorted order                
         else:
+            if not sys.argv[1].isdigit() or int(sys.argv[1])<2:
+                print("Error: illegal parameter", sys.argv[1], "Aborting.")
+                exit(1)
             n_max = int(sys.argv[1])
         IPE = sys.argv[-1]=="-ipe"
         

@@ -23,25 +23,46 @@ For convenience, the pdf-Version of this file is available as `NumPSLA-pdf.pdf`.
 
 The program is called with the parameters
 ```
-./NumPSLA n [splitlevel parts part] [fileprefix]
+./NumPSLA n [fileprefix]
 ```
 or
 ```
-./NumPSLA n -exclude excludefile [0 fileprefix]
+./NumPSLA n splitlevel parts part [fileprefix]
 ```
-The pseudoline arrangments will be enumerated up to n pseudolines.
+or
+```
+./NumPSLA n -exclude excludefile [fileprefix]
+```
+The pseudoline arrangments will be enumerated up to n pseudolines (3 ≤ n ≤ 15).
 This corresponds to AOTs with up to n+1 points.
 If a `fileprefix` is given, statistics about the enumerated AOTs are
 written to the text file fileprefix-*n*.txt, where *n* is the given parameter.
+(The `fileprefix` must not start with a digit or with `-`.)
 A python script like `makereport.py` can be used to analyze this output and
 aggregate it into interesting tables.
+
+All parameters are checked. If a parameter is erroneous, or if the report-file cannot be written,
+the program aborts with an error message.
 
 The excludefile can be used to enumerate only _realizable_ AOTs with up to
 11 points. For this purpose the three files
 `exclude11.txt`, `exclude10.txt` (for up to 10 points), and `exclude09.txt` (for 9 points) are provided.
 `exclude11.txt` is provided in gzipped-format because its uncompressed size is 161.8 MBytes. Beware of the
-shift in the parameter: For `./NumPSLA 9` you need the excludefile for at least 10 points. (The parameter `0`
-is necessary due to a programming oversight, which has not been fixed yet.)
+shift in the parameter: For `./NumPSLA 9` you need the excludefile for at least 10 points.
+For example,
+```
+gunzip -k exclude-files/exclude11.txt.gz
+./NumPSLA 10 -exclude exclude-files/exclude11.txt realizable11
+```
+counts the 2,334,512,907 realizable order types with 11 points.
+
+The exclude-file is checked thoroughly: Every line must contain one decimal code,
+the codes must be sorted in increasing lexicographic order (comparing the components as numbers),
+no code may be a prefix of another code, and every code (up to length n) must
+correspond to a node of the enumeration tree. Codes that are longer than n are ignored.
+If any of these conditions is violated, the program aborts with an error message.
+(In earlier versions of the program, the extra parameter `0` was required after the excludefile;
+this is no longer allowed.)
 
 ## Parallel processing
 The parameters "`splitlevel parts part`" are used to separate the enumeration task
@@ -49,12 +70,19 @@ into independent tasks for parallel processing. If the _splitlevel_ is 8, for ex
 PSLAs with 8 lines are visited, and we can imagine them as nodes on level 8 of
 the tree, numbered consecutively.
 Then the program will expand only those nodes whose number is congruent to _part_ modulo _parts_.
+The _splitlevel_ must be between 3 and n-1, and 0 ≤ _part_ ≤ _parts_.
+If no `fileprefix` is given, the report-file name starts with `reportPSLA`.
 
 For example, starting the program with `NumPSLA 11 8 100 1 out`, `NumPSLA 11 8 100 2 out`, ..., `NumPSLA 11 8 100 100 out`, 
 will lead to 100 independent runs that collectively go to all nodes at level 11.
-The outputs in the files starting with `out` can then be aggregated into a single file
-with the python program `aggregate-reportfiles.py`.
-Beware that this feature does not work together with exclude-files.
+The outputs are written to the files `out-11-S8-part_`*k*`_of_100.txt` for *k* = 0,...,99
+(the part number is taken modulo 100).
+They can then be aggregated into a single file
+with the python program `aggregate-reportfiles.py`:
+```
+python3 python/aggregate-reportfiles.py out-11-S8-part_%d_of_100.txt 100 > out-11.txt
+```
+Beware that this feature does not work together with exclude-files. (This is checked.)
 
 # Utility programs in Python
 
@@ -147,6 +175,10 @@ ctangle NumPSLA.w benchmark.ch
    python3 prepare-non-realizable.py A9-sorted DB9-sorted non-r9.txt
    ```
    The resulting file contains the Dewey decimal notations of the non-realizable AOTs.
+   Lines without a record (such as the messages of the programs) are skipped.
+   The script aborts with an error message if a file is not sorted,
+   if a fingerprint appears twice, or if a fingerprint from the database does not appear in the list of all AOTs.
+   (In that case, the files were probably produced by different versions of the program.)
 
 7. Sort `non-r9.txt` lexicographically, taking care to sort the indidivual entries numerically:
    ```
@@ -154,14 +186,24 @@ ctangle NumPSLA.w benchmark.ch
    ```
 8. Repeat the above steps for 10 and 11 points. Beware, the file `A11` has 85.3 GBytes. For sorting, the computer
    needs to have enough disk space for temporary files.
+   Make sure that all files `A`*n* are generated with the same version of the program as the one with which
+   the exclude-files will be used, because the decimal codes depend on details of the enumeration algorithm.
 9. Finally, merge the these files into the final exclude-files:
    ```
    cp exclude9-raw.txt  exclude09.txt
    python3 merge-non-realizable.py exclude09.txt exclude10-raw.txt exclude10.txt
    python3 merge-non-realizable.py exclude10.txt exclude11-raw.txt exclude11.txt
    ```
+   The script checks that its input files are sorted and prefix-free, and aborts otherwise.
    This merges the files and removes 10-point AOTs whose code has a prefix appearing
    in `exclude09.txt` etc.
+
+10. As a final check, run the enumeration with the exclude-file and compare the number of AOTs with
+    the number of order types in the database:
+    ```
+    ./NumPSLA 10 -exclude exclude11.txt
+    ```
+    must report 2,334,512,907 AOTs for 11 points.
 
 The file `exclude11.txt` can be used for excluding the nonrealizable AOTs for up to 11 points.
 For excluding the nonrealizable AOTs for up to 10 points, the file `exclude10.txt` is sufficient.
