@@ -259,7 +259,7 @@ intersects all other pseudolines from top to bottom at the very left
 and again intersects all pseudolines from bottom to top at the very
 right.
 
-As a projective PSLA, the top face would be enclose by an edge that
+As a projective PSLA, the top face would be enclosed by an edge that
 closes line 0 into a closed loop, from the intersection with 5 to the
 intersection with 0 (not shown in the picture).
 We consider this edge as the \emph{starting edge} of this
@@ -366,7 +366,7 @@ enumeration algorithm is a depth-first traversal of this tree.
 @p
 
 @<Default preprocessor...@>@;
-@<Include standard libaries@>@;
+@<Include standard libraries@>@;
 @<Types and data structures@>@;
 @<Global variables@>@;
 @<Subroutines@>@;
@@ -393,7 +393,7 @@ int main (int argc,char* argv[])
 
 The program has the enumeration procedure at its core, but it can be
 configured to
-perfom different tasks, by setting  preprocessor switches at
+perform different tasks, by setting  preprocessor switches at
 compile-time.
 
 We assume that the program will anyway be modified and extended for specific
@@ -454,7 +454,7 @@ typedef enum {@+@!false,@+@!true @+ } boolean;
 
 
 @ Standard libraries
-@<Include standard libaries@>=
+@<Include standard libraries@>=
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -1455,7 +1455,7 @@ the |pred|-pointers.
 %if |reversed==true|.
 The $P$-matrix is filled row-wise from right to left.
 
-The stardard, unchanged, setting would be obtained with |line0==0| and
+The standard, unchanged, setting would be obtained with |line0==0| and
 |right_vertex==1|.
 
 
@@ -1477,7 +1477,7 @@ int Sequence[MAXN+1]; /*
 |Sequence[p]| gives the $p$-th crossing (in the |SUCC|-direction) on line
 |start_line|. */
 int new_label[MAXN+1]; /*
-|new_label[j]| gives the label that is use for the line
+|new_label[j]| gives the label that is used for the line
 with the original label
 $j$. */
 @/
@@ -1566,7 +1566,7 @@ int Sequence[MAXN+1][MAXN+1]; /*
 |Sequence[r][p]| gives the $p$-th crossing on the $r$-th hull edge. */
 int new_label[MAXN+1][MAXN+1]; /*
 When the $r$-th hull edge is used in the role of line 0,
-|new_label[r][j]| gives the index that is use for the (original) line
+|new_label[r][j]| gives the index that is used for the (original) line
 $j$. */
 int candidate[2*(MAXN+1)]; // list of candidates, gives the index |r| into |hulledges|
 @qint current_line[2*(MAXN+1)]; // indexed by candidate number @>
@@ -1939,7 +1939,7 @@ $j'={}$|SUCC|$(i,j)$. Walk on line $j$ to the left (by |PRED|)
 until meeting line~% the intersection with
 $j'$.
 
-We apply this definition two all pairs $(i,j)$ of
+We apply this definition to all pairs $(i,j)$ of
 consecutive edges on the upper envelope, starting with $(0,1)$ and
 ending with $(n,0)$. (The last pair is the only pair with $i>j$.)
 
@@ -1992,7 +1992,7 @@ and |return false|.
 This cannot occur if $P_{1n}=2$ for line 0, but
 otherwise there is a high chance for finding a smaller value $P_{1n}$
 for some of the other candidates.
-[ Observation. The relative frequence of $P_{1n}$ over all PSLAs is
+[ Observation. The relative frequency of $P_{1n}$ over all PSLAs is
 about 26\,\% for 2 and $n$, about 11\,\% for 3 and $n-1$ and decreases
 towards the middle values. The symmetry can be explained as follows.
 A PSLA is essentially a projective oriented PSLA with a marked angle. Going to
@@ -2101,7 +2101,7 @@ $Q(i,j)$ and $\bar Q(i,j)$ are both 2.
  We apply a test at level $n-1$, before the $n$-th pseudoline
 is inserted.
  If we find out that none of the PSLAs obtained by adding line
- $n$ has a change of surviving the screening test,
+ $n$ has a chance of surviving the screening test,
 we can save a lot of time by not generating these PSLAs at all
 (rather than generating many PSLAs with $n$ lines and
  eliminating them by screening).

@@ -93,13 +93,7 @@ k<i&&i<j?PaInverse[i][j]> PaInverse[i][k]: \
 #include <assert.h> 
 
 
-/*:10*//*79:*/
-#line 128 "pred"
-
-#include <fcntl.h> 
-#include <unistd.h> 
-
-/*:79*/
+/*:10*/
 #line 369 "NumPSLA.w"
 
 /*4:*/
