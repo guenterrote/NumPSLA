@@ -40,7 +40,8 @@ The excludefile can be used to enumerate only _realizable_ AOTs with up to
 11 points. For this purpose the three files
 `exclude11.txt`, `exclude10.txt` (for up to 10 points), and `exclude09.txt` (for 9 points) are provided.
 `exclude11.txt` is provided in gzipped-format because its uncompressed size is 184.6 MBytes. Beware of the
-shift in the parameter: For `./NumPSLA 9` you need the excludefile for at least 10 points.
+shift in the parameter: For `./NumPSLA 9` you need the excludefile for at least 10 points. (The parameter `0`
+is necessary due to a programming oversight, which has not been fixed yet.)
 
 ## Parallel processing
 The parameters "`splitlevel parts part`" are used to separate the enumeration task
@@ -96,7 +97,7 @@ The script
 python3 makereport.py crossing+halving-results-12.txt
 ```
 will read these data and arrange them into a few tables.
-Recently, we have completed the statistics for 13 points on
+We have meanwhile also completed the statistics for 13 points on
 a compute-cluster. The results are in the file `crossing+halving-results-13.txt`.
 
 # Benchmark
@@ -114,7 +115,7 @@ ctangle NumPSLA.w benchmark.ch
    It consists of 94 files with a total of 102,718,567,908 bytes (102.7 GBytes),
    44 bytes per order type.
    We assume that the order types with up to 10 points are stored in the
-   current directory in with the original file names
+   current directory with the original file names
    `otypes10.b16`, `otypes09.b16`, `otypes08.b08`, etc.,
    and the order types with 11 points are stored 
    in a subdirectory `Ordertypes` with names
@@ -159,7 +160,7 @@ ctangle NumPSLA.w benchmark.ch
    python3 merge-non-realizable.py exclude09.txt exclude10-raw.txt exclude10.txt
    python3 merge-non-realizable.py exclude10.txt exclude11-raw.txt exclude11.txt
    ```
-   This merges the files and removes 10-point AOTs whose code hat a prefix appearing
+   This merges the files and removes 10-point AOTs whose code has a prefix appearing
    in `exclude09.txt` etc.
 
 The file `exclude11.txt` can be used for excluding the nonrealizable AOTs for up to 11 points.
