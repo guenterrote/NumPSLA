@@ -20,15 +20,15 @@ PRED(j,k2) = k1; \
 program_name,program_name,program_name) ; \
 
 #define getOrientation_explicit(PaInverse,i,j,k) ( \
-i<j&&j<k?PaInverse[i][j]> PaInverse[i][k]: \
-i<k&&k<j?PaInverse[i][j]> PaInverse[i][k]: \
-j<i&&i<k?PaInverse[i][j]<PaInverse[i][k]: \
-j<k&&k<i?PaInverse[i][j]> PaInverse[i][k]: \
-k<j&&j<i?PaInverse[i][j]> PaInverse[i][k]: \
-k<i&&i<j?PaInverse[i][j]<PaInverse[i][k]: \
+i<j&&j<k?PaInverse[i][j]<PaInverse[i][k]: \
+i<k&&k<j?PaInverse[i][j]<PaInverse[i][k]: \
+j<i&&i<k?PaInverse[i][j]> PaInverse[i][k]: \
+j<k&&k<i?PaInverse[i][j]<PaInverse[i][k]: \
+k<j&&j<i?PaInverse[i][j]<PaInverse[i][k]: \
+k<i&&i<j?PaInverse[i][j]> PaInverse[i][k]: \
 0)  \
 
-#define getOrientation(PaInverse,i,j,k) ((i<j) ^(j<k) ^(PaInverse[j][i]> PaInverse[j][k]) )  \
+#define getOrientation(PaInverse,i,j,k) ((i<j) ^(j<k) ^(PaInverse[j][i]<PaInverse[j][k]) )  \
  \
  \
 
@@ -116,7 +116,7 @@ typedef enum{false,true}boolean;
 
 
 /*:9*//*69:*/
-#line 2554 "NumPSLA.w"
+#line 2558 "NumPSLA.w"
 
 
 
@@ -174,7 +174,7 @@ unsigned previous_code[MAXN+3];
 int previous_length= 0;
 
 /*:22*//*43:*/
-#line 1556 "NumPSLA.w"
+#line 1560 "NumPSLA.w"
 
 
 
@@ -194,7 +194,7 @@ int P_1_n_reverse[MAXN+1];
 
 
 /*:43*//*54:*/
-#line 2188 "NumPSLA.w"
+#line 2192 "NumPSLA.w"
 
 
 long long unsigned cpass,csaved;
@@ -203,7 +203,7 @@ long long unsigned cpass,csaved;
 
 
 /*:54*//*55:*/
-#line 2222 "NumPSLA.w"
+#line 2226 "NumPSLA.w"
 
 
 long long unsigned countPSLA[MAXN+2],countO[MAXN+2],countU[MAXN+2];
@@ -379,7 +379,7 @@ j= 0;
 
 
 /*:32*//*34:*/
-#line 1143 "NumPSLA.w"
+#line 1147 "NumPSLA.w"
 
 
 int upper_hull_PSLA(int n,
@@ -403,7 +403,7 @@ return hullsize;
 }
 
 /*:34*//*35:*/
-#line 1191 "NumPSLA.w"
+#line 1195 "NumPSLA.w"
 
 unsigned localCountPSLA[MAXN+3];
 
@@ -415,7 +415,7 @@ printf(".%d",localCountPSLA[i]);
 }
 
 /*:35*//*37:*/
-#line 1212 "NumPSLA.w"
+#line 1216 "NumPSLA.w"
 
 
 
@@ -491,7 +491,7 @@ assert(num_crossings==n*(n-1)/2);
 }
 
 /*:37*//*38:*/
-#line 1296 "NumPSLA.w"
+#line 1300 "NumPSLA.w"
 
 
 void print_pseudolines_short(P_matrix*P,int n)
@@ -517,7 +517,7 @@ printf("%c",TO_CHAR((*P)[i][j]));
 }
 
 /*:38*//*39:*/
-#line 1375 "NumPSLA.w"
+#line 1379 "NumPSLA.w"
 
 char fingerprint[FINGERPRINT_LENGTH];
 
@@ -558,7 +558,7 @@ fingerprint[charpos]= '\0';
 }
 
 /*:39*//*42:*/
-#line 1465 "NumPSLA.w"
+#line 1469 "NumPSLA.w"
 
 
 void compute_new_P_matrix(P_matrix*P,int n,int line0,
@@ -604,7 +604,7 @@ j= reversed?SUCC(i,j):PRED(i,j);
 
 
 /*:42*//*44:*/
-#line 1577 "NumPSLA.w"
+#line 1581 "NumPSLA.w"
 
 
 void prepare_label_arrays(int n,
@@ -632,7 +632,7 @@ i= SUCC(line0,i);
 
 
 /*:44*//*45:*/
-#line 1637 "NumPSLA.w"
+#line 1641 "NumPSLA.w"
 
 void compute_lex_smallest_P_matrix(P_matrix*P,int n,
 int*hulledges,int hullsize)
@@ -670,7 +670,7 @@ int pos= p;
 for(c= 0;c<numcandidates_forward;c++)
 {
 /*46:*/
-#line 1698 "NumPSLA.w"
+#line 1702 "NumPSLA.w"
 
 int r= candidate[c];
 int i= Sequence[r][pos];
@@ -694,7 +694,7 @@ new_candidates++;
 
 
 /*:46*/
-#line 1674 "NumPSLA.w"
+#line 1678 "NumPSLA.w"
 
 }
 new_candidates_forward= new_candidates;
@@ -705,7 +705,7 @@ pos= n+1-p;
 for(;c<numcandidates;c++)
 {
 /*46:*/
-#line 1698 "NumPSLA.w"
+#line 1702 "NumPSLA.w"
 
 int r= candidate[c];
 int i= Sequence[r][pos];
@@ -729,7 +729,7 @@ new_candidates++;
 
 
 /*:46*/
-#line 1684 "NumPSLA.w"
+#line 1688 "NumPSLA.w"
 
 }
 numcandidates_forward= new_candidates_forward;
@@ -740,11 +740,11 @@ numcandidates= new_candidates;
 }
 }
 /*:45*//*47:*/
-#line 1734 "NumPSLA.w"
+#line 1738 "NumPSLA.w"
 
 
 /*51:*/
-#line 2030 "NumPSLA.w"
+#line 2034 "NumPSLA.w"
 
 boolean screen_lex_smallest(int n,
 int*hulledges,int hullsize)
@@ -804,7 +804,7 @@ return true;
 
 
 /*:51*/
-#line 1736 "NumPSLA.w"
+#line 1740 "NumPSLA.w"
 
 
 boolean has_lex_smallest_P_matrix(int n,
@@ -818,7 +818,7 @@ return false;
 numTests++;
 
 #endif
-#line 1749 "NumPSLA.w"
+#line 1753 "NumPSLA.w"
 
 
 prepare_label_arrays(n,hulledges,hullsize,false);
@@ -866,13 +866,13 @@ int pos= p;
 for(c= 0;c<numcandidates_forward;c++)
 {
 /*48:*/
-#line 1832 "NumPSLA.w"
+#line 1836 "NumPSLA.w"
 
 
 #if profile
 numComparisons++;
 #endif
-#line 1837 "NumPSLA.w"
+#line 1841 "NumPSLA.w"
  int r= candidate[c];
 int i= Sequence[r][pos];
 
@@ -902,7 +902,7 @@ new_candidates++;
 
 
 /*:48*/
-#line 1797 "NumPSLA.w"
+#line 1801 "NumPSLA.w"
 
 }
 numcandidates_forward= new_candidates;
@@ -913,13 +913,13 @@ pos= n+1-p;
 for(;c<numcandidates;c++)
 {
 /*48:*/
-#line 1832 "NumPSLA.w"
+#line 1836 "NumPSLA.w"
 
 
 #if profile
 numComparisons++;
 #endif
-#line 1837 "NumPSLA.w"
+#line 1841 "NumPSLA.w"
  int r= candidate[c];
 int i= Sequence[r][pos];
 
@@ -949,7 +949,7 @@ new_candidates++;
 
 
 /*:48*/
-#line 1807 "NumPSLA.w"
+#line 1811 "NumPSLA.w"
 
 }
 numcandidates= new_candidates;
@@ -963,7 +963,7 @@ return true;
 }
 }
 /*49:*/
-#line 1868 "NumPSLA.w"
+#line 1872 "NumPSLA.w"
 
 {
 if(numcandidates_forward> 0)
@@ -980,14 +980,14 @@ int symmetric_shift= candidate[numcandidates_forward];
 
 
 /*:49*/
-#line 1819 "NumPSLA.w"
+#line 1823 "NumPSLA.w"
 
 
 return true;
 }
 
 /*:47*//*70:*/
-#line 2579 "NumPSLA.w"
+#line 2583 "NumPSLA.w"
 
 
 
@@ -1020,7 +1020,7 @@ j= SUCC(i,j);
 }
 
 /*:70*//*72:*/
-#line 2634 "NumPSLA.w"
+#line 2638 "NumPSLA.w"
 
 
 void copy_small(small_lambda_matrix*A,small_lambda_matrix*B,int n)
@@ -1040,8 +1040,9 @@ for_int_from_to(i,k+1,n-1)
 for_int_from_to(j,i+1,n-1)
 {
 boolean plus= entry_small(Temp,i,k)<entry_small(Temp,j,k);
-(*B)[k][i][j]= (*B)[i][j][k]= (*B)[j][k][i]= plus;
-(*B)[k][j][i]= (*B)[i][k][j]= (*B)[j][i][k]= !plus;
+(*B)[k][i][j]= (*B)[i][j][k]= (*B)[j][k][i]= !plus;
+(*B)[k][j][i]= (*B)[i][k][j]= (*B)[j][i][k]= plus;
+
 if(plus)
 entry_small(Temp,i,j)--;
 else
@@ -1189,7 +1190,7 @@ close(databasefile);
 }
 
 
-#line 2701 "NumPSLA.w"
+#line 2706 "NumPSLA.w"
 
 
 /*:82*/
@@ -1304,7 +1305,7 @@ matched_length++;
 }
 
 /*:23*//*62:*/
-#line 2448 "NumPSLA.w"
+#line 2452 "NumPSLA.w"
 
 
 
@@ -1313,7 +1314,7 @@ matched_length++;
 
 if(is_excluded)return;
 /*57:*/
-#line 2261 "NumPSLA.w"
+#line 2265 "NumPSLA.w"
 
 
 int hulledges[MAXN+1];
@@ -1365,24 +1366,24 @@ MIRROR_WITHOUT_FIXED_VERTEX]++;
 printf("found n=%d. %Ld ",n_points,countO[n_points]);
 print_small(S,n_points);
 #endif
-#line 2312 "NumPSLA.w"
+#line 2316 "NumPSLA.w"
 
 /*:57*/
 #line 798 "NumPSLA.w"
 
 /*63:*/
-#line 2453 "NumPSLA.w"
+#line 2457 "NumPSLA.w"
 
 
 
 /*:63*//*64:*/
-#line 2461 "NumPSLA.w"
+#line 2465 "NumPSLA.w"
 
 
 #if generatelist
 if(n==n_max&&lex_smallest){
 /*40:*/
-#line 1415 "NumPSLA.w"
+#line 1419 "NumPSLA.w"
 
 {
 P_matrix P;
@@ -1396,15 +1397,15 @@ printf("%s:",fingerprint);
 
 
 /*:40*/
-#line 2465 "NumPSLA.w"
+#line 2469 "NumPSLA.w"
 
 print_id(n);printf("\n");}
 #endif
-#line 2468 "NumPSLA.w"
+#line 2472 "NumPSLA.w"
 
 
 /*:64*//*66:*/
-#line 2473 "NumPSLA.w"
+#line 2477 "NumPSLA.w"
 
 #if 0
 if(n==n_max&&countPSLA[n]==50){
@@ -1416,11 +1417,11 @@ printf("inverse ");print_pseudolines_short(&PaInverse,n+1);
 print_wiring_diagram(n);
 }
 #endif
-#line 2484 "NumPSLA.w"
+#line 2488 "NumPSLA.w"
 
 
 /*:66*//*67:*/
-#line 2487 "NumPSLA.w"
+#line 2491 "NumPSLA.w"
 
 #if 0  
 #define MID 5
@@ -1469,11 +1470,11 @@ printf("\n");
 }
 
 #endif
-#line 2535 "NumPSLA.w"
+#line 2539 "NumPSLA.w"
 
 
 /*:67*//*73:*/
-#line 2671 "NumPSLA.w"
+#line 2676 "NumPSLA.w"
 
 
 #if 0
@@ -1485,7 +1486,7 @@ convert_to_small_lambda_matrix(&S,n_points);
 large_Lambda_matrix L;
 convert_small_to_large(&S,&L,n_points);
 /*74:*/
-#line 2685 "NumPSLA.w"
+#line 2690 "NumPSLA.w"
 
 
 for_int_from_to(i,0,n_points-1)
@@ -1503,10 +1504,10 @@ exit(1);
 
 #line 1 "pred"
 /*:74*/
-#line 2681 "NumPSLA.w"
+#line 2686 "NumPSLA.w"
 
 #endif
-#line 2683 "NumPSLA.w"
+#line 2688 "NumPSLA.w"
 
 /*:73*/
 #line 799 "NumPSLA.w"
@@ -1521,7 +1522,7 @@ if(n!=split_level||countPSLA[n]%parts==part){
 boolean hopeful= true;
 if(n==n_max-1){
 /*53:*/
-#line 2170 "NumPSLA.w"
+#line 2174 "NumPSLA.w"
 
 int P_1_n= PRED(1,0);
 
@@ -1741,7 +1742,7 @@ return 0;
 #line 383 "NumPSLA.w"
 #if enumAOT
 /*56:*/
-#line 2242 "NumPSLA.w"
+#line 2246 "NumPSLA.w"
 
 
 countPSLA[1]= 
@@ -1796,7 +1797,7 @@ exit(1);
 #line 386 "NumPSLA.w"
 ;
 /*58:*/
-#line 2317 "NumPSLA.w"
+#line 2321 "NumPSLA.w"
 
 printf("%34s%69s\n","#PSLA visited by the program","#PSLA computed from AOT");
 for_int_from_to(n,3,n_max+1){
@@ -1812,7 +1813,7 @@ countO[n],symmetric
 );
 printf("#PSLA=%11Ld, #uPSLA=%10Ld",PSLAcount[n],U_PSLAcount[n]);
 #endif
-#line 2332 "NumPSLA.w"
+#line 2336 "NumPSLA.w"
  printf("\n");
 
 }
@@ -1822,15 +1823,15 @@ if(split_level!=0)printf("* Lines with \"*\" give results from partial enumerati
 printf("Total tests is_lex_min (after screening) = %Ld, total comparisons = %Ld, average =%6.3f\n",
 numTests,numComparisons,numComparisons/(double)numTests);
 #endif
-#line 2341 "NumPSLA.w"
+#line 2345 "NumPSLA.w"
 
 #if enumAOT
 printf("Prescreening: passed %Ld, saved %Ld out of %Ld = %.2f%%\n",cpass,csaved,
 cpass+csaved,100*csaved/(double)(cpass+csaved));
 #endif
-#line 2346 "NumPSLA.w"
+#line 2350 "NumPSLA.w"
 /*:58*//*59:*/
-#line 2353 "NumPSLA.w"
+#line 2357 "NumPSLA.w"
 
 
 

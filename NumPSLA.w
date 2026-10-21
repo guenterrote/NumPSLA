@@ -1079,7 +1079,11 @@ It is computed by comparing the intersections on line $j$.
 
 
 If $i<j<k$, this predicate is |true| if the intersection of lines $i$
-and $k$ lies above line $j$.
+and $k$ lies below line $j$.
+With the duality $(a,b)\leftrightarrow y=ax-b$ between points and lines,
+this is the case if and only if the dual points $p_i,p_j,p_k$
+are in counterclockwise order. (For the point $p_0$ dual to line~0,
+this holds if $p_0$ is placed far above and to the left of the other points.)
 %sides of the triangle formed by lines $i,j,k$ are from the lines $i,j,k$ in
 % counter-clockwise order.
 When $i,j,k$ are permuted, the predicate must change according to the
@@ -1098,15 +1102,15 @@ all 3! possibilities in which the indices $i,j,k$ can be ordered.
 
 
 @d getOrientation_explicit(PaInverse, i, j, k) (
-i<j && j<k ? PaInverse[i][j]>PaInverse[i][k] : 
-i<k && k<j ? PaInverse[i][j]>PaInverse[i][k] : 
-j<i && i<k ? PaInverse[i][j]<PaInverse[i][k] : @|@t\hskip -2em\phantom(@>
-j<k && k<i ? PaInverse[i][j]>PaInverse[i][k] : 
-k<j && j<i ? PaInverse[i][j]>PaInverse[i][k] : 
-k<i && i<j ? PaInverse[i][j]<PaInverse[i][k] : 
+i<j && j<k ? PaInverse[i][j]<PaInverse[i][k] : 
+i<k && k<j ? PaInverse[i][j]<PaInverse[i][k] : 
+j<i && i<k ? PaInverse[i][j]>PaInverse[i][k] : @|@t\hskip -2em\phantom(@>
+j<k && k<i ? PaInverse[i][j]<PaInverse[i][k] : 
+k<j && j<i ? PaInverse[i][j]<PaInverse[i][k] : 
+k<i && i<j ? PaInverse[i][j]>PaInverse[i][k] : 
 0)
 
-@d getOrientation(PaInverse, i, j, k) ((i<j) ^ (j<k) ^ (PaInverse[j][i]>PaInverse[j][k]))
+@d getOrientation(PaInverse, i, j, k) ((i<j) ^ (j<k) ^ (PaInverse[j][i]<PaInverse[j][k]))
 
 
 
@@ -2650,8 +2654,9 @@ int n)
             for_int_from_to(j,i+1, n-1)  // $k<i<j$ 
             {
               boolean plus = entry_small(Temp,i,k)<entry_small(Temp,j,k);
-              (*B)[k][i][j]=(*B)[i][j][k]=(*B)[j][k][i]= plus;
-              (*B)[k][j][i]=(*B)[i][k][j]=(*B)[j][i][k]= !plus;
+              (*B)[k][i][j]=(*B)[i][j][k]=(*B)[j][k][i]= !plus;
+              (*B)[k][j][i]=(*B)[i][k][j]=(*B)[j][i][k]= plus;
+              /* |true| means counterclockwise, as for |getOrientation| */
               if (plus)
                 entry_small(Temp,i,j)--;
               else
