@@ -259,7 +259,7 @@ intersects all other pseudolines from top to bottom at the very left
 and again intersects all pseudolines from bottom to top at the very
 right.
 
-As a projective PSLA, the top face would be enclose by an edge that
+As a projective PSLA, the top face would be enclosed by an edge that
 closes line 0 into a closed loop, from the intersection with 5 to the
 intersection with 0 (not shown in the picture).
 We consider this edge as the \emph{starting edge} of this
@@ -301,7 +301,7 @@ therefore we define the rows to have maximum length |MAXN+1|.
 
 The binary matrix $T$ is discussed in Section~\ref{binary-fingerprint}.
 It is defined in terms of the $P$-matrix by the rule
-$T_i[j]=1$ if $P_i[j]<i$.
+$T_i[j]=1$ if $0<P_i[j]<i$.
 
 @<Types...@>=
 typedef int P_matrix[MAXN+1][MAXN+1];
@@ -366,7 +366,7 @@ enumeration algorithm is a depth-first traversal of this tree.
 @p
 
 @<Default preprocessor...@>@;
-@<Include standard libaries@>@;
+@<Include standard libraries@>@;
 @<Types and data structures@>@;
 @<Global variables@>@;
 @<Subroutines@>@;
@@ -393,7 +393,7 @@ int main (int argc,char* argv[])
 
 The program has the enumeration procedure at its core, but it can be
 configured to
-perfom different tasks, by setting  preprocessor switches at
+perform different tasks, by setting  preprocessor switches at
 compile-time.
 
 We assume that the program will anyway be modified and extended for specific
@@ -454,7 +454,7 @@ typedef enum {@+@!false,@+@!true @+ } boolean;
 
 
 @ Standard libraries
-@<Include standard libaries@>=
+@<Include standard libraries@>=
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -1079,7 +1079,11 @@ It is computed by comparing the intersections on line $j$.
 
 
 If $i<j<k$, this predicate is |true| if the intersection of lines $i$
-and $k$ lies above line $j$.
+and $k$ lies below line $j$.
+With the duality $(a,b)\leftrightarrow y=ax-b$ between points and lines,
+this is the case if and only if the dual points $p_i,p_j,p_k$
+are in counterclockwise order. (For the point $p_0$ dual to line~0,
+this holds if $p_0$ is placed far above and to the left of the other points.)
 %sides of the triangle formed by lines $i,j,k$ are from the lines $i,j,k$ in
 % counter-clockwise order.
 When $i,j,k$ are permuted, the predicate must change according to the
@@ -1098,15 +1102,15 @@ all 3! possibilities in which the indices $i,j,k$ can be ordered.
 
 
 @d getOrientation_explicit(PaInverse, i, j, k) (
-i<j && j<k ? PaInverse[i][j]>PaInverse[i][k] : 
-i<k && k<j ? PaInverse[i][j]>PaInverse[i][k] : 
-j<i && i<k ? PaInverse[i][j]<PaInverse[i][k] : @|@t\hskip -2em\phantom(@>
-j<k && k<i ? PaInverse[i][j]>PaInverse[i][k] : 
-k<j && j<i ? PaInverse[i][j]>PaInverse[i][k] : 
-k<i && i<j ? PaInverse[i][j]<PaInverse[i][k] : 
+i<j && j<k ? PaInverse[i][j]<PaInverse[i][k] : 
+i<k && k<j ? PaInverse[i][j]<PaInverse[i][k] : 
+j<i && i<k ? PaInverse[i][j]>PaInverse[i][k] : @|@t\hskip -2em\phantom(@>
+j<k && k<i ? PaInverse[i][j]<PaInverse[i][k] : 
+k<j && j<i ? PaInverse[i][j]<PaInverse[i][k] : 
+k<i && i<j ? PaInverse[i][j]>PaInverse[i][k] : 
 0)
 
-@d getOrientation(PaInverse, i, j, k) ((i<j) ^ (j<k) ^ (PaInverse[j][i]>PaInverse[j][k]))
+@d getOrientation(PaInverse, i, j, k) ((i<j) ^ (j<k) ^ (PaInverse[j][i]<PaInverse[j][k]))
 
 
 
@@ -1324,7 +1328,7 @@ A PSLA is uniquely determined
 by the $n\times n$ binary matrix $T$, which is
 %The entries$T_i[j]=1$ if $P_i[j]<i$.
  defined in terms of the $P$-matrix by the rule
-$T_i[j]=1$ if $P_i[j]<i$.
+$T_i[j]=1$ if $0<P_i[j]<i$.
 An example is shown in Section~\ref{sec:matrices}.
 % binary arrays $T_1,\ldots,T_n$.
 The fact that this is enough can be seen from the
@@ -1351,16 +1355,19 @@ The first row $T_1$ and the last row $T_n$ is fixed, and they need not
 be coded.
 Also, since row $T_i$ contains $i-1$ ones, we can omit the last entry
 per row, since it can be reconstructed from the remaining entries.
-Thus we encode the $(n-2)\times(n-2)$ array obtained
-removing the borders from the original $n\times n$ array.
+However, the program does not exploit all these redundancies:
+it encodes the $(n-1)\times(n-1)$ array obtained by
+removing the first column and the last row from the original $n\times n$ array.
 
-We code 6 bits into on of 64 ASCII symbols, using the 52 small and capital
+We code 6 bits into one of 64 ASCII symbols, using the 52 small and capital
 letters, the 10 digits, and the 2 symbols \texttt{+} and~\texttt{-}.
 (Care must be taken when sorting such keys with the
 \textsc{unix}
 \texttt{sort}
 utility, because, depending on the \emph{locale} settings, the sorting
-program may conflate uppercase and lowercase letters.)
+program may conflate uppercase and lowercase letters.
+We recommend to prefix the sort command with \texttt{LANG=C}, as in
+\texttt{LANG=C sort}.)
 
 
  We use this encoding for the case when $n$ is known. Therefore
@@ -1369,8 +1376,8 @@ we need not worry about terminating the code.
 
 
 
-@d FINGERPRINT_LENGTH 30
-//enough for $13\times13$ bits plus terminating null
+@d FINGERPRINT_LENGTH (((MAXN-1)*(MAXN-1)+5)/6+1)
+/* enough for $(|MAXN|-1)\times(|MAXN|-1)$ bits, 6 bits per character, plus terminating null */
 
 @<Subr...@>=
 char fingerprint[FINGERPRINT_LENGTH]; // global variable
@@ -1401,14 +1408,13 @@ for_int_from_to(j,1,n-1)
   bit_num += 1;
   if (bit_num == 6) {
     fingerprint[charpos++] =  encode_bits(acc);
-    assert(charpos < FINGERPRINT_LENGTH-1);
     bit_num = acc = 0;
   }
   }
   if (bit_num) 
     fingerprint[charpos++] =  encode_bits(acc<<(6-bit_num));
-    assert(charpos < FINGERPRINT_LENGTH-1);
-    fingerprint[charpos] =  '\0';
+  assert(charpos < FINGERPRINT_LENGTH); // room for the terminating null
+  fingerprint[charpos] =  '\0';
   }
 
 @  
@@ -1449,7 +1455,7 @@ the |pred|-pointers.
 %if |reversed==true|.
 The $P$-matrix is filled row-wise from right to left.
 
-The stardard, unchanged, setting would be obtained with |line0==0| and
+The standard, unchanged, setting would be obtained with |line0==0| and
 |right_vertex==1|.
 
 
@@ -1471,7 +1477,7 @@ int Sequence[MAXN+1]; /*
 |Sequence[p]| gives the $p$-th crossing (in the |SUCC|-direction) on line
 |start_line|. */
 int new_label[MAXN+1]; /*
-|new_label[j]| gives the label that is use for the line
+|new_label[j]| gives the label that is used for the line
 with the original label
 $j$. */
 @/
@@ -1560,7 +1566,7 @@ int Sequence[MAXN+1][MAXN+1]; /*
 |Sequence[r][p]| gives the $p$-th crossing on the $r$-th hull edge. */
 int new_label[MAXN+1][MAXN+1]; /*
 When the $r$-th hull edge is used in the role of line 0,
-|new_label[r][j]| gives the index that is use for the (original) line
+|new_label[r][j]| gives the index that is used for the (original) line
 $j$. */
 int candidate[2*(MAXN+1)]; // list of candidates, gives the index |r| into |hulledges|
 @qint current_line[2*(MAXN+1)]; // indexed by candidate number @>
@@ -1933,7 +1939,7 @@ $j'={}$|SUCC|$(i,j)$. Walk on line $j$ to the left (by |PRED|)
 until meeting line~% the intersection with
 $j'$.
 
-We apply this definition two all pairs $(i,j)$ of
+We apply this definition to all pairs $(i,j)$ of
 consecutive edges on the upper envelope, starting with $(0,1)$ and
 ending with $(n,0)$. (The last pair is the only pair with $i>j$.)
 
@@ -1986,7 +1992,7 @@ and |return false|.
 This cannot occur if $P_{1n}=2$ for line 0, but
 otherwise there is a high chance for finding a smaller value $P_{1n}$
 for some of the other candidates.
-[ Observation. The relative frequence of $P_{1n}$ over all PSLAs is
+[ Observation. The relative frequency of $P_{1n}$ over all PSLAs is
 about 26\,\% for 2 and $n$, about 11\,\% for 3 and $n-1$ and decreases
 towards the middle values. The symmetry can be explained as follows.
 A PSLA is essentially a projective oriented PSLA with a marked angle. Going to
@@ -2023,8 +2029,11 @@ computing $\bar Q(i,j)$ would also be fast in this case.)
  2,343,203,071 PSLA are really lex-min, and this is the number of
  AOTs that we really want.
  The screening test seems to be more and more effective for larger
- $n$, but this is in line with the fact that the probability of being
- lex-smallest decreases, since it is close to $1/(2n+2)$.
+ $n$. The probability of being lex-smallest is about $1/(2\bar h)$,
+ where $\bar h$ is the average number of convex hull vertices,
+ which converges to $1/8$.
+ For 10 lines, the fraction is
+ 2,343,203,071/18,410,581,880 = 0.127.
 
 
 @<Screening procedures@>=
@@ -2092,7 +2101,7 @@ $Q(i,j)$ and $\bar Q(i,j)$ are both 2.
  We apply a test at level $n-1$, before the $n$-th pseudoline
 is inserted.
  If we find out that none of the PSLAs obtained by adding line
- $n$ has a change of surviving the screening test,
+ $n$ has a chance of surviving the screening test,
 we can save a lot of time by not generating these PSLAs at all
 (rather than generating many PSLAs with $n$ lines and
  eliminating them by screening).
@@ -2118,9 +2127,9 @@ few ways.
 
 
 A very rudimentary pre-screening test has been implemented, namely for
-the comparison between $Q(0,1)$ and $\bar Q(1,0)$:
+the comparison between $Q(0,1)$ and $\bar Q(0,1)$:
 
- \emph{If $\bar Q(0,1)< Q(1,0)-1$ in the arrangement with $n-1$ lines,
+ \emph{If $\bar Q(0,1)< Q(0,1)-1$ in the arrangement with $n-1$ lines,
    then there is no chance to augment this to a lex-min PSLA.}
 
  Proof:
@@ -2131,8 +2140,8 @@ the comparison between $Q(0,1)$ and $\bar Q(1,0)$:
  $1\times 0$ and
  $1\times{}$|PRED|$(1,0)$, then
  $Q(0,1)=P_{1n}$ is unchanged.
- $\bar Q(1,0)$ can increase by at most 1. Thus
- $\bar Q(1,0)$ will beat $Q(1,0)$.
+ $\bar Q(0,1)$ can increase by at most 1. Thus
+ $\bar Q(0,1)$ will beat $Q(0,1)$.
 
 If line $n$ intersects line 1
  between
@@ -2142,8 +2151,8 @@ If line $n$ intersects line 1
  Q(0,1)=P_{1n}$, and thus
  $P_{1n}$ has the maximum possible value, $n$, and is certainly larger
  than before.
-$\bar Q(1,0)$ can still increase by at most 1. Thus
- $\bar Q(1,0)$ will beat $Q(1,0)$.
+$\bar Q(0,1)$ can still increase by at most 1. Thus
+ $\bar Q(0,1)$ will beat $Q(0,1)$.
 
  For example, with $n=9$ lines
  there are  112,018,190 PSLAs, and they generate as children
@@ -2315,17 +2324,17 @@ First some basic statistics are written in tabular form to the terminal:
 
 
 @<Report statistics...@>=
-  printf("%34s%69s\n","#PSLA visited by the program", "#PSLA computed from AOT");
+  printf("%34s%76s\n","#PSLA visited by the program", "#PSLA computed from AOT");
 for_int_from_to(n,3,n_max+1) {
-  long long symmetric =  2*countU[n] - countO[n];
+  long long mirror_symmetric =  2*countU[n] - countO[n]; // AOTs with a mirror symmetry
   printf("n=%2d", n);
   if (split_level!=0 && n>split_level)  printf("*,"); @+
   else  printf(", ");
   printf("#PSLA=%11Ld", countPSLA[n]);
 #if enumAOT
-  printf(", #AOT=%10Ld, #OAOT=%10Ld, #symm. AOT=%7Ld, ",
+  printf(", #AOT=%10Ld, #OAOT=%10Ld, #mirror-symm. AOT=%7Ld, ",
   countU[n], 
-countO[n], symmetric
+countO[n], mirror_symmetric
   );
   printf("#PSLA=%11Ld, #uPSLA=%10Ld", PSLAcount[n], U_PSLAcount[n]);
 #endif
@@ -2650,8 +2659,9 @@ int n)
             for_int_from_to(j,i+1, n-1)  // $k<i<j$ 
             {
               boolean plus = entry_small(Temp,i,k)<entry_small(Temp,j,k);
-              (*B)[k][i][j]=(*B)[i][j][k]=(*B)[j][k][i]= plus;
-              (*B)[k][j][i]=(*B)[i][k][j]=(*B)[j][i][k]= !plus;
+              (*B)[k][i][j]=(*B)[i][j][k]=(*B)[j][k][i]= !plus;
+              (*B)[k][j][i]=(*B)[i][k][j]=(*B)[j][i][k]= plus;
+              /* |true| means counterclockwise, as for |getOrientation| */
               if (plus)
                 entry_small(Temp,i,j)--;
               else

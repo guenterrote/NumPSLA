@@ -41,7 +41,7 @@ the program aborts with an error message.
 The excludefile can be used to enumerate only _realizable_ AOTs with up to
 11 points. For this purpose the three files
 `exclude11.txt`, `exclude10.txt` (for up to 10 points), and `exclude09.txt` (for 9 points) are provided.
-`exclude11.txt` is provided in gzipped-format because its uncompressed size is 161.8 MBytes. Beware of the
+`exclude11.txt` is provided in gzipped-format because its uncompressed size is 161.9 MBytes. Beware of the
 shift in the parameter: For `./NumPSLA 9` you need the excludefile for at least 10 points.
 For example,
 ```

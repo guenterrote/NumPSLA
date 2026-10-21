@@ -125,7 +125,7 @@ etc., and the order types with 11 points are stored in a subdirectory
 \texttt{Ordertypes} with names \texttt{Ordertypes/ord11\_00.b16} \ldots
 \texttt{Ordertypes/ord11\_93.b16}.
 
-@<Include standard libaries@>+=
+@<Include standard libraries@>+=
 #include <fcntl.h>
 #include <unistd.h>
 
