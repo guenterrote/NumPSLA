@@ -185,7 +185,7 @@ void read_database_file(char *inputfile, int bits, int record_size,
     int databasefile = open(inputfile,O_RDONLY);
   if(databasefile == -1)
     {
-      printf("File could not be opened.\n");
+      fprintf(stderr,"Error: File %s could not be opened. Aborting.\n", inputfile);
       exit(1);
     }
 
@@ -198,7 +198,11 @@ void read_database_file(char *inputfile, int bits, int record_size,
 	bytes_read = read(databasefile, &pointsmall, record_size);
      
       if(bytes_read==0) break;
-      if(bytes_read!=record_size) { printf("Incomplete file.\n"); exit(1); }
+      if(bytes_read!=record_size) {
+        fprintf(stderr,"Error: %s while reading file %s. Aborting.\n",
+          bytes_read<0 ? "Read error" : "Incomplete record", inputfile);
+        exit(1);
+      }
       read_count++;
       if (bits==16 && is_big_endian) swap_all_bytes(n_points);
       if (bits==8)
