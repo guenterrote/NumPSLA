@@ -1355,16 +1355,19 @@ The first row $T_1$ and the last row $T_n$ is fixed, and they need not
 be coded.
 Also, since row $T_i$ contains $i-1$ ones, we can omit the last entry
 per row, since it can be reconstructed from the remaining entries.
-Thus we encode the $(n-2)\times(n-2)$ array obtained
-removing the borders from the original $n\times n$ array.
+However, the program does not exploit all these redundancies:
+it encodes the $(n-1)\times(n-1)$ array obtained by
+removing the first column and the last row from the original $n\times n$ array.
 
-We code 6 bits into on of 64 ASCII symbols, using the 52 small and capital
+We code 6 bits into one of 64 ASCII symbols, using the 52 small and capital
 letters, the 10 digits, and the 2 symbols \texttt{+} and~\texttt{-}.
 (Care must be taken when sorting such keys with the
 \textsc{unix}
 \texttt{sort}
 utility, because, depending on the \emph{locale} settings, the sorting
-program may conflate uppercase and lowercase letters.)
+program may conflate uppercase and lowercase letters.
+We recommend to prefix the sort command with \texttt{LANG=C}, as in
+\texttt{LANG=C sort}.)
 
 
  We use this encoding for the case when $n$ is known. Therefore
@@ -1373,8 +1376,8 @@ we need not worry about terminating the code.
 
 
 
-@d FINGERPRINT_LENGTH 30
-//enough for $13\times13$ bits plus terminating null
+@d FINGERPRINT_LENGTH (((MAXN-1)*(MAXN-1)+5)/6+1)
+/* enough for $(|MAXN|-1)\times(|MAXN|-1)$ bits, 6 bits per character, plus terminating null */
 
 @<Subr...@>=
 char fingerprint[FINGERPRINT_LENGTH]; // global variable
@@ -1405,14 +1408,13 @@ for_int_from_to(j,1,n-1)
   bit_num += 1;
   if (bit_num == 6) {
     fingerprint[charpos++] =  encode_bits(acc);
-    assert(charpos < FINGERPRINT_LENGTH-1);
     bit_num = acc = 0;
   }
   }
   if (bit_num) 
     fingerprint[charpos++] =  encode_bits(acc<<(6-bit_num));
-    assert(charpos < FINGERPRINT_LENGTH-1);
-    fingerprint[charpos] =  '\0';
+  assert(charpos < FINGERPRINT_LENGTH); // room for the terminating null
+  fingerprint[charpos] =  '\0';
   }
 
 @  
