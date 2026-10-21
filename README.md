@@ -21,16 +21,10 @@ cweave NumPSLA.w
 generates the LaTeX-file `NumPSLA.tex`.
 For convenience, the pdf-Version of this file is available as `NumPSLA-pdf.pdf`. `NumPSLA.w` includes another CWEB file, `readDataBase.w`.
 
-The program is called with the parameters
+The program is called in one of the following three ways:
 ```
 ./NumPSLA n [fileprefix]
-```
-or
-```
 ./NumPSLA n splitlevel parts part [fileprefix]
-```
-or
-```
 ./NumPSLA n -exclude excludefile [fileprefix]
 ```
 The pseudoline arrangments will be enumerated up to n pseudolines (3 ≤ n ≤ 15).
@@ -61,8 +55,6 @@ the codes must be sorted in increasing lexicographic order (comparing the compon
 no code may be a prefix of another code, and every code (up to length n) must
 correspond to a node of the enumeration tree. Codes that are longer than n are ignored.
 If any of these conditions is violated, the program aborts with an error message.
-(In earlier versions of the program, the extra parameter `0` was required after the excludefile;
-this is no longer allowed.)
 
 ## Parallel processing
 The parameters "`splitlevel parts part`" are used to separate the enumeration task
