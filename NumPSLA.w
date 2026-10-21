@@ -806,7 +806,7 @@ if (excluded_length>0 && n<=excluded_length &&
 // overshooting at the first unmatched level
 { fprintf(stderr, "Exclude-file entry was skipped (not in tree, unsorted, or not prefix-free):");
   for_int_from_to(q,3,excluded_length) fprintf(stderr,".%d",excluded_code[q]);
-  fprintf(stderr,"\n"); exit(1);
+  fprintf(stderr,". Aborting.\n"); exit(1);
 }
 if (n==matched_length+1 &&
 localCountPSLA[n]==excluded_code[n])
