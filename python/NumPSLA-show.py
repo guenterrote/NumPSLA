@@ -1,5 +1,5 @@
 """
-Output of a PSLA or serveral PSLAs as a wiring diagram, optionally as an ipe-file.
+Output of a PSLA or several PSLAs as a wiring diagram, optionally as an ipe-file.
 PSLAs are specified either by decimal code, such as
 
   2.1.7.13.66.4
@@ -13,11 +13,11 @@ or
   P!123456789AB!027364589AB!018769A53B4!0716895A2B4!0761589AB23!06714893A2B!05741382AB9!05643182AB9!01453672BA9!014532AB678!014352967B8!014235967A8
 
 Entries larger than 9 are represented by letters A,B,C,...
-The separator ! can be replaced by :
+The separator `!` can be replaced by `:`.
 
 A single PSLA can be written on the command line, or several PSLAs can be
 given in a file, one per line.
-If the targets are given as decimal codes, they must appear in sorted order.
+If the PSLAs are given as decimal codes, they must appear in lexicographically sorted order.
 
 Some optional extra text after the PSLA in the file is added to the output.
 
