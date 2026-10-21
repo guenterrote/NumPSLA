@@ -301,7 +301,7 @@ therefore we define the rows to have maximum length |MAXN+1|.
 
 The binary matrix $T$ is discussed in Section~\ref{binary-fingerprint}.
 It is defined in terms of the $P$-matrix by the rule
-$T_i[j]=1$ if $P_i[j]<i$.
+$T_i[j]=1$ if $0<P_i[j]<i$.
 
 @<Types...@>=
 typedef int P_matrix[MAXN+1][MAXN+1];
@@ -1328,7 +1328,7 @@ A PSLA is uniquely determined
 by the $n\times n$ binary matrix $T$, which is
 %The entries$T_i[j]=1$ if $P_i[j]<i$.
  defined in terms of the $P$-matrix by the rule
-$T_i[j]=1$ if $P_i[j]<i$.
+$T_i[j]=1$ if $0<P_i[j]<i$.
 An example is shown in Section~\ref{sec:matrices}.
 % binary arrays $T_1,\ldots,T_n$.
 The fact that this is enough can be seen from the
