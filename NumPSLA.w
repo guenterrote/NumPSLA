@@ -2027,8 +2027,11 @@ computing $\bar Q(i,j)$ would also be fast in this case.)
  2,343,203,071 PSLA are really lex-min, and this is the number of
  AOTs that we really want.
  The screening test seems to be more and more effective for larger
- $n$, but this is in line with the fact that the probability of being
- lex-smallest decreases, since it is close to $1/(2n+2)$.
+ $n$. The probability of being lex-smallest is about $1/(2\bar h)$,
+ where $\bar h$ is the average number of convex hull vertices,
+ which converges to $1/8$.
+ For 10 lines, the fraction is
+ 2,343,203,071/18,410,581,880 = 0.127.
 
 
 @<Screening procedures@>=

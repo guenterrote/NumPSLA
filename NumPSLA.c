@@ -116,7 +116,7 @@ typedef enum{false,true}boolean;
 
 
 /*:9*//*69:*/
-#line 2558 "NumPSLA.w"
+#line 2561 "NumPSLA.w"
 
 
 
@@ -194,7 +194,7 @@ int P_1_n_reverse[MAXN+1];
 
 
 /*:43*//*54:*/
-#line 2192 "NumPSLA.w"
+#line 2195 "NumPSLA.w"
 
 
 long long unsigned cpass,csaved;
@@ -203,7 +203,7 @@ long long unsigned cpass,csaved;
 
 
 /*:54*//*55:*/
-#line 2226 "NumPSLA.w"
+#line 2229 "NumPSLA.w"
 
 
 long long unsigned countPSLA[MAXN+2],countO[MAXN+2],countU[MAXN+2];
@@ -744,7 +744,7 @@ numcandidates= new_candidates;
 
 
 /*51:*/
-#line 2034 "NumPSLA.w"
+#line 2037 "NumPSLA.w"
 
 boolean screen_lex_smallest(int n,
 int*hulledges,int hullsize)
@@ -987,7 +987,7 @@ return true;
 }
 
 /*:47*//*70:*/
-#line 2583 "NumPSLA.w"
+#line 2586 "NumPSLA.w"
 
 
 
@@ -1020,7 +1020,7 @@ j= SUCC(i,j);
 }
 
 /*:70*//*72:*/
-#line 2638 "NumPSLA.w"
+#line 2641 "NumPSLA.w"
 
 
 void copy_small(small_lambda_matrix*A,small_lambda_matrix*B,int n)
@@ -1190,7 +1190,7 @@ close(databasefile);
 }
 
 
-#line 2706 "NumPSLA.w"
+#line 2709 "NumPSLA.w"
 
 
 /*:82*/
@@ -1305,7 +1305,7 @@ matched_length++;
 }
 
 /*:23*//*62:*/
-#line 2452 "NumPSLA.w"
+#line 2455 "NumPSLA.w"
 
 
 
@@ -1314,7 +1314,7 @@ matched_length++;
 
 if(is_excluded)return;
 /*57:*/
-#line 2265 "NumPSLA.w"
+#line 2268 "NumPSLA.w"
 
 
 int hulledges[MAXN+1];
@@ -1366,18 +1366,18 @@ MIRROR_WITHOUT_FIXED_VERTEX]++;
 printf("found n=%d. %Ld ",n_points,countO[n_points]);
 print_small(S,n_points);
 #endif
-#line 2316 "NumPSLA.w"
+#line 2319 "NumPSLA.w"
 
 /*:57*/
 #line 798 "NumPSLA.w"
 
 /*63:*/
-#line 2457 "NumPSLA.w"
+#line 2460 "NumPSLA.w"
 
 
 
 /*:63*//*64:*/
-#line 2465 "NumPSLA.w"
+#line 2468 "NumPSLA.w"
 
 
 #if generatelist
@@ -1397,15 +1397,15 @@ printf("%s:",fingerprint);
 
 
 /*:40*/
-#line 2469 "NumPSLA.w"
+#line 2472 "NumPSLA.w"
 
 print_id(n);printf("\n");}
 #endif
-#line 2472 "NumPSLA.w"
+#line 2475 "NumPSLA.w"
 
 
 /*:64*//*66:*/
-#line 2477 "NumPSLA.w"
+#line 2480 "NumPSLA.w"
 
 #if 0
 if(n==n_max&&countPSLA[n]==50){
@@ -1417,11 +1417,11 @@ printf("inverse ");print_pseudolines_short(&PaInverse,n+1);
 print_wiring_diagram(n);
 }
 #endif
-#line 2488 "NumPSLA.w"
+#line 2491 "NumPSLA.w"
 
 
 /*:66*//*67:*/
-#line 2491 "NumPSLA.w"
+#line 2494 "NumPSLA.w"
 
 #if 0  
 #define MID 5
@@ -1470,11 +1470,11 @@ printf("\n");
 }
 
 #endif
-#line 2539 "NumPSLA.w"
+#line 2542 "NumPSLA.w"
 
 
 /*:67*//*73:*/
-#line 2676 "NumPSLA.w"
+#line 2679 "NumPSLA.w"
 
 
 #if 0
@@ -1486,7 +1486,7 @@ convert_to_small_lambda_matrix(&S,n_points);
 large_Lambda_matrix L;
 convert_small_to_large(&S,&L,n_points);
 /*74:*/
-#line 2690 "NumPSLA.w"
+#line 2693 "NumPSLA.w"
 
 
 for_int_from_to(i,0,n_points-1)
@@ -1504,10 +1504,10 @@ exit(1);
 
 #line 1 "pred"
 /*:74*/
-#line 2686 "NumPSLA.w"
+#line 2689 "NumPSLA.w"
 
 #endif
-#line 2688 "NumPSLA.w"
+#line 2691 "NumPSLA.w"
 
 /*:73*/
 #line 799 "NumPSLA.w"
@@ -1522,7 +1522,7 @@ if(n!=split_level||countPSLA[n]%parts==part){
 boolean hopeful= true;
 if(n==n_max-1){
 /*53:*/
-#line 2174 "NumPSLA.w"
+#line 2177 "NumPSLA.w"
 
 int P_1_n= PRED(1,0);
 
@@ -1742,7 +1742,7 @@ return 0;
 #line 383 "NumPSLA.w"
 #if enumAOT
 /*56:*/
-#line 2246 "NumPSLA.w"
+#line 2249 "NumPSLA.w"
 
 
 countPSLA[1]= 
@@ -1797,7 +1797,7 @@ exit(1);
 #line 386 "NumPSLA.w"
 ;
 /*58:*/
-#line 2321 "NumPSLA.w"
+#line 2324 "NumPSLA.w"
 
 printf("%34s%69s\n","#PSLA visited by the program","#PSLA computed from AOT");
 for_int_from_to(n,3,n_max+1){
@@ -1813,7 +1813,7 @@ countO[n],symmetric
 );
 printf("#PSLA=%11Ld, #uPSLA=%10Ld",PSLAcount[n],U_PSLAcount[n]);
 #endif
-#line 2336 "NumPSLA.w"
+#line 2339 "NumPSLA.w"
  printf("\n");
 
 }
@@ -1823,15 +1823,15 @@ if(split_level!=0)printf("* Lines with \"*\" give results from partial enumerati
 printf("Total tests is_lex_min (after screening) = %Ld, total comparisons = %Ld, average =%6.3f\n",
 numTests,numComparisons,numComparisons/(double)numTests);
 #endif
-#line 2345 "NumPSLA.w"
+#line 2348 "NumPSLA.w"
 
 #if enumAOT
 printf("Prescreening: passed %Ld, saved %Ld out of %Ld = %.2f%%\n",cpass,csaved,
 cpass+csaved,100*csaved/(double)(cpass+csaved));
 #endif
-#line 2350 "NumPSLA.w"
+#line 2353 "NumPSLA.w"
 /*:58*//*59:*/
-#line 2357 "NumPSLA.w"
+#line 2360 "NumPSLA.w"
 
 
 
