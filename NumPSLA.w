@@ -2127,9 +2127,9 @@ few ways.
 
 
 A very rudimentary pre-screening test has been implemented, namely for
-the comparison between $Q(0,1)$ and $\bar Q(1,0)$:
+the comparison between $Q(0,1)$ and $\bar Q(0,1)$:
 
- \emph{If $\bar Q(0,1)< Q(1,0)-1$ in the arrangement with $n-1$ lines,
+ \emph{If $\bar Q(0,1)< Q(0,1)-1$ in the arrangement with $n-1$ lines,
    then there is no chance to augment this to a lex-min PSLA.}
 
  Proof:
@@ -2140,8 +2140,8 @@ the comparison between $Q(0,1)$ and $\bar Q(1,0)$:
  $1\times 0$ and
  $1\times{}$|PRED|$(1,0)$, then
  $Q(0,1)=P_{1n}$ is unchanged.
- $\bar Q(1,0)$ can increase by at most 1. Thus
- $\bar Q(1,0)$ will beat $Q(1,0)$.
+ $\bar Q(0,1)$ can increase by at most 1. Thus
+ $\bar Q(0,1)$ will beat $Q(0,1)$.
 
 If line $n$ intersects line 1
  between
@@ -2151,8 +2151,8 @@ If line $n$ intersects line 1
  Q(0,1)=P_{1n}$, and thus
  $P_{1n}$ has the maximum possible value, $n$, and is certainly larger
  than before.
-$\bar Q(1,0)$ can still increase by at most 1. Thus
- $\bar Q(1,0)$ will beat $Q(1,0)$.
+$\bar Q(0,1)$ can still increase by at most 1. Thus
+ $\bar Q(0,1)$ will beat $Q(0,1)$.
 
  For example, with $n=9$ lines
  there are  112,018,190 PSLAs, and they generate as children
