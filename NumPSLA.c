@@ -1799,17 +1799,17 @@ exit(1);
 /*58:*/
 #line 2324 "NumPSLA.w"
 
-printf("%34s%69s\n","#PSLA visited by the program","#PSLA computed from AOT");
+printf("%34s%76s\n","#PSLA visited by the program","#PSLA computed from AOT");
 for_int_from_to(n,3,n_max+1){
-long long symmetric= 2*countU[n]-countO[n];
+long long mirror_symmetric= 2*countU[n]-countO[n];
 printf("n=%2d",n);
 if(split_level!=0&&n> split_level)printf("*,");
 else printf(", ");
 printf("#PSLA=%11Ld",countPSLA[n]);
 #if enumAOT
-printf(", #AOT=%10Ld, #OAOT=%10Ld, #symm. AOT=%7Ld, ",
+printf(", #AOT=%10Ld, #OAOT=%10Ld, #mirror-symm. AOT=%7Ld, ",
 countU[n],
-countO[n],symmetric
+countO[n],mirror_symmetric
 );
 printf("#PSLA=%11Ld, #uPSLA=%10Ld",PSLAcount[n],U_PSLAcount[n]);
 #endif
